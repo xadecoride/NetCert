@@ -1,0 +1,25 @@
+# NetCert Pro — Playground Topology
+# Single cRPD node for interactive JunOS CLI practice
+# Requires crpd:24.2R1 image (download from Juniper Support Portal)
+#   docker pull crpd:24.2R1  (requires login at hub.juniper.net)
+# Or load from file:
+#   docker load -i crpd-24.2R1.tgz
+
+name: netcert-playground
+
+topology:
+  kinds:
+    juniper_crpd:
+      image: crpd:24.2R1
+      cpu: 1
+      memory: 512M
+
+  nodes:
+    r1:
+      kind: juniper_crpd
+      mgmt-ipv4: 172.100.100.2
+      env:
+        JUNOS_ROOT_PASSWORD: NetCert123
+      # No initial config — user starts from scratch
+
+  links: []

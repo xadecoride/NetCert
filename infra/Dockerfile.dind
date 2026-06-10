@@ -1,0 +1,33 @@
+# NetCert — Containerlab DinD с Python3 для Auto-Grading
+#
+# На основе docker:27-dind, добавляет Python 3 для выполнения grade.py скриптов
+# и Containerlab для развёртывания топологий внутри DinD-контейнера.
+#
+FROM docker:27-dind
+
+# Install Python 3 + paramiko + curl для Containerlab и Auto-Grading.
+RUN echo "==> Installing Python 3 and SSH dependencies..." && \
+    apk add --no-cache --update \
+        python3 \
+        py3-pip \
+        py3-paramiko \
+        py3-cryptography \
+        openssh-client \
+        curl \
+    && \
+    python3 --version && \
+    python3 -c "import paramiko; print('paramiko OK:', paramiko.__version__)" && \
+    echo "==> DinD Python setup complete"
+
+# Install Containerlab v0.75.0 from official APK release.
+# This is done permanently in the image so it survives container recreates.
+ARG CLAB_VERSION=v0.75.0
+RUN echo "==> Installing Containerlab ${CLAB_VERSION}..." && \
+    curl -sL "https://github.com/srl-labs/containerlab/releases/download/${CLAB_VERSION}/containerlab_${CLAB_VERSION#v}_linux_amd64.apk" -o /tmp/clab.apk && \
+    apk add --allow-untrusted /tmp/clab.apk && \
+    rm /tmp/clab.apk && \
+    containerlab version && \
+    echo "==> Containerlab ${CLAB_VERSION} installed"
+
+# dockerd-entrypoint.sh предоставляется базовым образом docker:dind
+ENTRYPOINT ["dockerd-entrypoint.sh"]

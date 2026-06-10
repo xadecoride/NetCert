@@ -1,0 +1,46 @@
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git ca-certificates
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/server ./cmd/server
+
+# Install goose migration tool
+RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+
+FROM alpine:3.19
+
+# Install dependencies for lab orchestration:
+# - docker CLI: to execute commands inside Containerlab DinD
+# - containerlab: to deploy lab topologies (used via DOCKER_HOST pointing to DinD)
+# - ssh: for fallback device access
+# - curl: health checks and containerlab self-install
+RUN apk add --no-cache \
+    ca-certificates \
+    tzdata \
+    docker-cli \
+    openssh-client \
+    curl \
+    bash \
+    postgresql-client
+
+# Copy goose binary from builder
+COPY --from=builder /go/bin/goose /usr/local/bin/goose
+
+WORKDIR /app
+COPY --from=builder /app/server .
+COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/labs ./labs
+
+EXPOSE 8080 8090
+
+# Create non-root user for runtime security
+RUN adduser -D -u 1000 appuser && chown -R appuser /app
+USER appuser
+
+CMD ["./server"]

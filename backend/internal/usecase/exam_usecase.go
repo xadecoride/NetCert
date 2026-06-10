@@ -1,0 +1,348 @@
+package usecase
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"math/rand"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/netcert/backend/internal/domain"
+)
+
+var (
+	ErrAttemptNotFound = errors.New("attempt not found")
+	ErrExamNotFound    = errors.New("exam not found")
+)
+
+type ExamUseCase struct {
+	examRepo    domain.ExamRepository
+	attemptRepo domain.AttemptRepository
+}
+
+func NewExamUseCase(examRepo domain.ExamRepository, attemptRepo domain.AttemptRepository) *ExamUseCase {
+	return &ExamUseCase{examRepo: examRepo, attemptRepo: attemptRepo}
+}
+
+func (uc *ExamUseCase) ListTracks(ctx context.Context) ([]domain.Track, error) {
+	return uc.examRepo.ListTracks(ctx)
+}
+
+func (uc *ExamUseCase) GetTrack(ctx context.Context, slug string) (*domain.Track, error) {
+	return uc.examRepo.FindTrackBySlug(ctx, slug)
+}
+
+func (uc *ExamUseCase) ListExams(ctx context.Context, trackID uuid.UUID) ([]domain.Exam, error) {
+	return uc.examRepo.ListExams(ctx, trackID)
+}
+
+func (uc *ExamUseCase) GetExam(ctx context.Context, examID uuid.UUID) (*domain.Exam, error) {
+	return uc.examRepo.FindExamByID(ctx, examID)
+}
+
+func (uc *ExamUseCase) GetExamQuestions(ctx context.Context, examID uuid.UUID, lang string) ([]domain.Question, error) {
+	questions, err := uc.examRepo.ListQuestions(ctx, examID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Strip correct answers from options — client must never receive is_correct
+	for i := range questions {
+		for j := range questions[i].Options {
+			questions[i].Options[j].IsCorrect = false
+		}
+	
+	}
+
+	return questions, nil
+}
+
+func (uc *ExamUseCase) StartAttempt(ctx context.Context, userID uuid.UUID, req domain.StartAttemptRequest) (*domain.Attempt, error) {
+	exam, err := uc.examRepo.FindExamByID(ctx, req.ExamID)
+	if err != nil {
+		return nil, ErrExamNotFound
+	}
+
+	// Get all question IDs from the bank
+	allIDs, err := uc.examRepo.ListQuestionIDs(ctx, req.ExamID)
+	if err != nil {
+		return nil, err
+	}
+	if len(allIDs) == 0 {
+		return nil, errors.New("no questions available for this exam")
+	}
+
+	// Determine how many questions to take for this attempt
+	// Exam mode: use exam's total_questions (realistic count, e.g. 60 for JNCIA)
+	// Practice mode: use exam's total_questions too, but allow user to specify custom count
+	targetCount := exam.TotalQuestions
+	if req.QuestionCount > 0 && req.QuestionCount < targetCount {
+		targetCount = req.QuestionCount
+	}
+	if targetCount > len(allIDs) {
+		targetCount = len(allIDs)
+	}
+
+	// Randomly select targetCount questions from the bank
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	selected := make([]uuid.UUID, len(allIDs))
+	copy(selected, allIDs)
+	rng.Shuffle(len(selected), func(i, j int) {
+		selected[i], selected[j] = selected[j], selected[i]
+	})
+	selected = selected[:targetCount]
+
+	now := time.Now()
+	attempt := &domain.Attempt{
+		ID:                uuid.New(),
+		UserID:            userID,
+		ExamID:            req.ExamID,
+		Status:            domain.AttemptStatusInProgress,
+		Mode:              req.Mode,
+		StartedAt:         now,
+		DurationSeconds:   exam.DurationMinutes * 60,
+		QuestionsTotal:    targetCount,
+		QuestionsAnswered: 0,
+		QuestionsCorrect:  0,
+		CreatedAt:         now,
+	}
+
+	if err := uc.attemptRepo.Create(ctx, attempt); err != nil {
+		return nil, err
+	}
+
+	// Save the selected question IDs
+	if err := uc.attemptRepo.SaveAttemptQuestions(ctx, attempt.ID, selected); err != nil {
+		return nil, err
+	}
+
+	return attempt, nil
+}
+
+func (uc *ExamUseCase) GetAttempt(ctx context.Context, attemptID uuid.UUID) (*domain.Attempt, error) {
+	return uc.attemptRepo.FindByID(ctx, attemptID)
+}
+
+func (uc *ExamUseCase) GetAttemptQuestions(ctx context.Context, attemptID uuid.UUID) ([]domain.Question, error) {
+	// Validate attempt exists
+	_, err := uc.attemptRepo.FindByID(ctx, attemptID)
+	if err != nil {
+		return nil, ErrAttemptNotFound
+	}
+
+	// Get only the questions selected for this attempt
+	questionIDs, err := uc.attemptRepo.GetAttemptQuestionIDs(ctx, attemptID)
+	if err != nil {
+		return nil, err
+	}
+
+	questions, err := uc.examRepo.GetQuestionsByIDs(ctx, questionIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Hide correct answers — client must never receive is_correct during active attempt
+	for i := range questions {
+		for j := range questions[i].Options {
+			questions[i].Options[j].IsCorrect = false
+		}
+	}
+
+	return questions, nil
+}
+
+func (uc *ExamUseCase) SubmitAnswer(ctx context.Context, attemptID uuid.UUID, userID uuid.UUID, req domain.SubmitAnswerRequest) (*domain.AttemptAnswer, error) {
+	attempt, err := uc.attemptRepo.FindByID(ctx, attemptID)
+	if err != nil {
+		return nil, ErrAttemptNotFound
+	}
+
+	if attempt.UserID != userID {
+		return nil, errors.New("unauthorized")
+	}
+
+	if attempt.Status != domain.AttemptStatusInProgress {
+		return nil, errors.New("attempt is not in progress")
+	}
+
+	// Prevent duplicate answers: check if this question was already answered
+	hasAnswer, err := uc.attemptRepo.HasAnswer(ctx, attemptID, req.QuestionID)
+	if err != nil {
+		return nil, errors.New("failed to check existing answer")
+	}
+	if hasAnswer {
+		return nil, errors.New("question already answered")
+	}
+
+	// Validate that the answered question belongs to this attempt's selected subset
+	isInAttempt, err := uc.attemptRepo.IsQuestionInAttempt(ctx, attemptID, req.QuestionID)
+	if err != nil {
+		return nil, errors.New("failed to validate question")
+	}
+	if !isInAttempt {
+		return nil, errors.New("question is not part of this attempt")
+	}
+
+	question, err := uc.examRepo.FindQuestionByID(ctx, req.QuestionID)
+	if err != nil {
+		return nil, errors.New("question not found")
+	}
+
+	isCorrect := checkAnswer(question, req.Answer)
+
+	answer := &domain.AttemptAnswer{
+		ID:               uuid.New(),
+		AttemptID:        attemptID,
+		QuestionID:       req.QuestionID,
+		UserAnswer:       req.Answer,
+		IsCorrect:        &isCorrect,
+		TimeSpentSeconds: req.TimeSpentSeconds,
+		WasFlagged:       req.WasFlagged,
+		CreatedAt:        time.Now(),
+	}
+
+	if err := uc.attemptRepo.SaveAnswer(ctx, answer); err != nil {
+		return nil, err
+	}
+
+	// Update attempt progress
+	correctCount := attempt.QuestionsCorrect
+	if isCorrect {
+		correctCount++
+	}
+	if err := uc.attemptRepo.UpdateProgress(ctx, attemptID, attempt.QuestionsAnswered+1, correctCount); err != nil {
+		return nil, fmt.Errorf("update progress: %w", err)
+	}
+
+	return answer, nil
+}
+
+func (uc *ExamUseCase) CompleteAttempt(ctx context.Context, attemptID uuid.UUID, userID uuid.UUID) (*domain.Attempt, error) {
+	attempt, err := uc.attemptRepo.FindByID(ctx, attemptID)
+	if err != nil {
+		return nil, ErrAttemptNotFound
+	}
+
+	if attempt.UserID != userID {
+		return nil, errors.New("unauthorized")
+	}
+
+	if attempt.QuestionsTotal > 0 {
+		score := float64(attempt.QuestionsCorrect) / float64(attempt.QuestionsTotal) * 100
+		if err := uc.attemptRepo.Complete(ctx, attemptID, score, attempt.QuestionsCorrect, attempt.QuestionsAnswered); err != nil {
+			return nil, err
+		}
+	}
+
+	return uc.attemptRepo.FindByID(ctx, attemptID)
+}
+
+func (uc *ExamUseCase) GetAttemptWithDetails(ctx context.Context, attemptID uuid.UUID) (*domain.AttemptWithDetails, error) {
+	attempt, err := uc.attemptRepo.FindByID(ctx, attemptID)
+	if err != nil {
+		return nil, ErrAttemptNotFound
+	}
+
+	// Get only the questions selected for this attempt
+	questionIDs, err := uc.attemptRepo.GetAttemptQuestionIDs(ctx, attemptID)
+	if err != nil {
+		return nil, err
+	}
+
+	questions, err := uc.examRepo.GetQuestionsByIDs(ctx, questionIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get user answers for this attempt
+	answers, err := uc.attemptRepo.GetAnswers(ctx, attemptID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build answer lookup: questionID -> AttemptAnswer
+	answerMap := make(map[string]*domain.AttemptAnswer)
+	for i := range answers {
+		answerMap[answers[i].QuestionID.String()] = &answers[i]
+	}
+
+	// Build the detailed questions list
+	detailed := make([]domain.AttemptQuestionWithAnswer, 0, len(questions))
+	for _, q := range questions {
+		qa := domain.AttemptQuestionWithAnswer{
+			ID:               q.ID,
+			Body:             q.Body,
+			Options:          q.Options,
+			QuestionType:     q.QuestionType,
+			Difficulty:       q.Difficulty,
+			Explanation:      q.Explanation,
+			ReferenceURLs:    q.ReferenceURLs,
+			BlueprintSection: q.BlueprintSection,
+		}
+		if ans, ok := answerMap[q.ID.String()]; ok {
+			qa.UserAnswer = ans.UserAnswer
+			qa.IsCorrect = ans.IsCorrect
+			qa.WasFlagged = ans.WasFlagged
+			qa.TimeSpentSeconds = ans.TimeSpentSeconds
+		}
+		detailed = append(detailed, qa)
+	}
+
+	return &domain.AttemptWithDetails{
+		Attempt:   *attempt,
+		Questions: detailed,
+	}, nil
+}
+
+func (uc *ExamUseCase) GetAttemptHistory(ctx context.Context, userID uuid.UUID) ([]domain.Attempt, error) {
+	return uc.attemptRepo.ListByUser(ctx, userID)
+}
+
+func checkAnswer(question *domain.Question, answer string) bool {
+	switch question.QuestionType {
+	case domain.QuestionTypeFillBlank:
+		// For fill-blank, compare user text against the correct option's text (case-insensitive)
+		for _, opt := range question.Options {
+			if opt.IsCorrect {
+				return strings.EqualFold(strings.TrimSpace(answer), strings.TrimSpace(opt.Text))
+			}
+		}
+		return false
+
+	case domain.QuestionTypeMultipleChoice:
+		// For multiple-choice, answer is comma-separated IDs like "a,b"
+		selectedIDs := strings.Split(answer, ",")
+		// Build map of correct option IDs
+		correctMap := make(map[string]bool)
+		for _, opt := range question.Options {
+			if opt.IsCorrect {
+				correctMap[opt.ID] = true
+			}
+		}
+		// Count correct selections
+		correctCount := 0
+		for _, id := range selectedIDs {
+			id = strings.TrimSpace(id)
+			if id == "" {
+				continue
+			}
+			if correctMap[id] {
+				correctCount++
+			}
+		}
+		// Must select ALL correct options and NO incorrect ones
+		return correctCount == len(correctMap) && correctCount == len(selectedIDs)
+
+	default:
+		// Single-choice: match by option ID
+		for _, opt := range question.Options {
+			if opt.IsCorrect && opt.ID == answer {
+				return true
+			}
+		}
+		return false
+	}
+}
+

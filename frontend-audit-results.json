@@ -1,0 +1,174 @@
+{
+  "audit_date": "2026-06-09",
+  "project": "NetCert Frontend",
+  "plan_reference": "PLAN.md",
+  "summary": {
+    "total_checks": 10,
+    "passed": 4,
+    "partial": 3,
+    "failed": 3
+  },
+  "findings": [
+    {
+      "id": 1,
+      "category": "Next.js App Router + RSC",
+      "status": "PARTIAL",
+      "details": "App Router structure present (app/ directory with page.tsx, layout.tsx). However, ALL pages use 'use client' directive, negating RSC benefits. No server components found in routes.",
+      "evidence": {
+        "app_router_structure": true,
+        "rsc_usage": false,
+        "client_directive_count": 10,
+        "server_components_found": 0
+      },
+      "recommendation": "Convert data-fetching pages to Server Components. Use 'use client' only for interactive islands. Implement generateMetadata() and generateStaticParams() for SSG/ISR."
+    },
+    {
+      "id": 2,
+      "category": "TypeScript Strict Mode",
+      "status": "PASS",
+      "details": "tsconfig.json has 'strict': true enabled. Proper path aliases configured (@/*).",
+      "evidence": {
+        "strict_mode": true,
+        "target": "ES2017",
+        "module_resolution": "bundler"
+      }
+    },
+    {
+      "id": 3,
+      "category": "Tailwind CSS v4 + shadcn/ui",
+      "status": "PARTIAL",
+      "details": "Tailwind v4.0.0 installed with @tailwindcss/postcss. Custom design system in globals.css using @theme. shadcn/ui NOT properly integrated - no components.json, manual CVA implementation instead of official shadcn CLI setup.",
+      "evidence": {
+        "tailwind_version": "^4.0.0",
+        "postcss_plugin": "@tailwindcss/postcss ^4.3.0",
+        "shadcn_config_exists": false,
+        "ui_components_count": 3,
+        "cva_installed": true
+      },
+      "recommendation": "Run 'npx shadcn@latest init' to properly configure shadcn/ui. Migrate manual button/card/badge to shadcn registry for consistency and easier updates."
+    },
+    {
+      "id": 4,
+      "category": "TanStack Query (Server State)",
+      "status": "FAIL",
+      "details": "@tanstack/react-query NOT found in package.json or codebase. Manual fetch calls with useState/useEffect pattern used throughout.",
+      "evidence": {
+        "tanstack_query_installed": false,
+        "manual_fetch_pattern": true,
+        "query_client_found": false
+      },
+      "recommendation": "Install @tanstack/react-query v5. Create QueryClientProvider in layout.tsx. Refactor API calls to useQuery/useMutation for caching, deduplication, and background refetching."
+    },
+    {
+      "id": 5,
+      "category": "i18n (next-intl)",
+      "status": "FAIL",
+      "details": "next-intl NOT installed. Custom i18n context implementation exists at lib/i18n/context.tsx with en/ru locales. Functional but lacks SSR support, route-based locale switching, and next-intl features.",
+      "evidence": {
+        "next_intl_installed": false,
+        "custom_i18n_implementation": true,
+        "locales_supported": ["en", "ru"],
+        "ssr_support": false
+      },
+      "recommendation": "Migrate to next-intl for proper RSC-compatible translations, middleware-based locale detection, and SEO-friendly URL structures (/en/, /ru/)."
+    },
+    {
+      "id": 6,
+      "category": "PWA / Service Workers",
+      "status": "FAIL",
+      "details": "next-pwa NOT installed. No manifest.json, sw.js, or service worker registration found. No PWA capabilities.",
+      "evidence": {
+        "next_pwa_installed": false,
+        "manifest_exists": false,
+        "service_worker_exists": false
+      },
+      "recommendation": "Install next-pwa. Configure next.config.ts with PWA plugin. Create public/manifest.json with app metadata. Enable offline mode for study materials."
+    },
+    {
+      "id": 7,
+      "category": "xterm.js Integration",
+      "status": "PASS",
+      "details": "@xterm/xterm ^6.0.0 and @xterm/addon-fit ^0.11.0 properly installed. LabTerminal component implements WebSocket-based terminal with dynamic import, resize handling, and reconnection logic.",
+      "evidence": {
+        "xterm_installed": true,
+        "version": "^6.0.0",
+        "fit_addon": true,
+        "websocket_integration": true,
+        "component_path": "components/lab/LabTerminal.tsx"
+      }
+    },
+    {
+      "id": 8,
+      "category": "Recharts/nivo Analytics",
+      "status": "PARTIAL",
+      "details": "recharts ^2.15.0 installed but NO actual chart components imported or used. Only Phosphor ChartBar icons found. @nivo NOT installed.",
+      "evidence": {
+        "recharts_installed": true,
+        "recharts_used": false,
+        "nivo_installed": false,
+        "chart_icons_only": true
+      },
+      "recommendation": "Implement actual Recharts components (LineChart, BarChart, RadarChart) for analytics dashboard. Consider adding @nivo for advanced visualizations if needed."
+    },
+    {
+      "id": 9,
+      "category": "Error Boundaries & Loading States",
+      "status": "FAIL",
+      "details": "No error.tsx or loading.tsx files found in app/ directory. No ErrorBoundary components. No Suspense boundaries detected. Missing Next.js App Router error/loading conventions.",
+      "evidence": {
+        "error_tsx_files": 0,
+        "loading_tsx_files": 0,
+        "error_boundary_components": 0,
+        "suspense_usage": false
+      },
+      "recommendation": "Create app/error.tsx (global), app/loading.tsx (global), and route-specific error/loading files. Implement React ErrorBoundary class component for client-side error catching. Add Suspense wrappers around async operations."
+    },
+    {
+      "id": 10,
+      "category": "Accessibility (WCAG)",
+      "status": "PARTIAL",
+      "details": "Minimal accessibility implementation. focus-visible rings in button.tsx. Single aria-label in header.tsx. Global focus-visible CSS rule present but uses invalid 'ring' property. No comprehensive ARIA attributes, skip links, or keyboard navigation testing.",
+      "evidence": {
+        "focus_visible_implemented": true,
+        "aria_labels_count": 1,
+        "role_attributes_count": 0,
+        "skip_links": false,
+        "keyboard_navigation_tested": false,
+        "invalid_css_focus_rule": true
+      },
+      "recommendation": "Fix CSS focus-visible rule (replace 'ring' with 'outline'). Add skip-to-content link. Audit all interactive elements for aria-labels. Implement landmark roles. Test full keyboard navigation flow. Run axe-core automated audit."
+    }
+  ],
+  "critical_gaps": [
+    "TanStack Query missing - manual state management causes performance issues",
+    "No error boundaries - unhandled errors crash entire app",
+    "No PWA support - required for offline study functionality",
+    "RSC not utilized - all pages are client components",
+    "Charts library installed but unused - analytics features incomplete"
+  ],
+  "quick_wins": [
+    "Add error.tsx and loading.tsx to app/ root (30 min)",
+    "Install and configure @tanstack/react-query (2 hours)",
+    "Fix invalid CSS focus-visible rule (5 min)",
+    "Initialize shadcn/ui properly via CLI (1 hour)",
+    "Convert static pages (landing, about) to Server Components (1 hour)"
+  ],
+  "dependencies_analysis": {
+    "installed_per_plan": [
+      "next ^15.2.4 (PLAN: 16) - VERSION MISMATCH",
+      "react ^19.0.0 ✓",
+      "tailwindcss ^4.0.0 ✓",
+      "@xterm/xterm ^6.0.0 ✓",
+      "recharts ^2.15.0 ✓",
+      "zod ^3.24.1 ✓",
+      "framer-motion ^11.15.0 ✓"
+    ],
+    "missing_per_plan": [
+      "@tanstack/react-query v5",
+      "next-intl",
+      "next-pwa",
+      "@nivo/* packages",
+      "zustand (in lockfile but not package.json dependencies)"
+    ]
+  }
+}

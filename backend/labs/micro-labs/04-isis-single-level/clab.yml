@@ -1,0 +1,44 @@
+# NetCert Pro — Micro-Lab 04: IS-IS Single-Level
+# Topology: 3 cRPD in triangle (r1 ↔ r2 ↔ r3 ↔ r1)
+# Level: JNCIS / JNCIP
+# Duration: 15-20 minutes
+# Technology: IS-IS, Level 2, NET, adjacency, DIS election
+
+name: netcert-ml04-isis-single-level
+
+topology:
+  kinds:
+    juniper_crpd:
+      image: crpd:24.2R1
+      cpu: 1
+      memory: 512M
+
+  nodes:
+    r1:
+      kind: juniper_crpd
+      mgmt-ipv4: 172.100.1.2
+      binds:
+        - configs/r1.cfg:/config/juniper.conf.gz:ro
+      env:
+        JUNOS_ROOT_PASSWORD: NetCert123
+
+    r2:
+      kind: juniper_crpd
+      mgmt-ipv4: 172.100.1.3
+      binds:
+        - configs/r2.cfg:/config/juniper.conf.gz:ro
+      env:
+        JUNOS_ROOT_PASSWORD: NetCert123
+
+    r3:
+      kind: juniper_crpd
+      mgmt-ipv4: 172.100.1.4
+      binds:
+        - configs/r3.cfg:/config/juniper.conf.gz:ro
+      env:
+        JUNOS_ROOT_PASSWORD: NetCert123
+
+  links:
+    - endpoints: ["r1:eth1", "r2:eth1"]
+    - endpoints: ["r2:eth1", "r3:eth1"]
+    - endpoints: ["r3:eth1", "r1:eth1"]

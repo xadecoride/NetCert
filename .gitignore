@@ -1,0 +1,44 @@
+# Go
+backend/bin/
+backend/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+.cache/
+
+# Environment
+.env
+.env.local
+.env.production.local
+.env.development.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+docker-data/
+pgdata/
+redis-data/
+
+# Misc
+*.log
+*.pid
+*.seed
+*.pid.lock
+coverage/

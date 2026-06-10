@@ -1,0 +1,278 @@
+# ============================================================
+# NetCert Staging Environment — with Lab Services
+# ============================================================
+# Разворачивает полный стэк для staging:
+#   - PostgreSQL 16 + Redis 7
+#   - Go API server (lab orchestrator)
+#   - Frontend (Next.js)
+#   - Containerlab DinD (Docker-in-Docker) для запуска лабораторных топологий
+#   - WebSocket SSH Proxy (встроен в Go API сервер)
+#
+# Использование:
+#   docker compose -f infra/docker-compose.staging.yml up -d
+# ============================================================
+
+services:
+  # ─── Core Services ─────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: netcert-staging-postgres
+    environment:
+      POSTGRES_DB: netcert
+      POSTGRES_USER: netcert
+      POSTGRES_PASSWORD: netcert
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U netcert"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - netcert-staging
+
+  redis:
+    image: redis:7-alpine
+    container_name: netcert-staging-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - netcert-staging
+
+  migrations:
+    build:
+      context: ../backend
+      dockerfile: ../infra/Dockerfile.backend
+    container_name: netcert-staging-migrations
+    environment:
+      DATABASE_DSN: "postgres://netcert:netcert@postgres:5432/netcert?sslmode=disable"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        echo '==> Waiting for postgres...'
+        until pg_isready -h postgres -U netcert -d netcert; do
+          echo 'Waiting for postgres...'
+          sleep 2
+        done
+        echo '==> Running migrations...'
+        for f in /app/migrations/*.sql; do
+          [ -f "$$f" ] || continue
+          BASENAME="$$(basename $$f)"
+          printf 'Applying: %s... ' "$$BASENAME"
+          if grep -q '+goose Up' "$$f"; then
+            # Goose-formatted file: extract only the Up section
+            awk '
+              BEGIN { up = 0 }
+              /^-- \+goose Up/       { up = 1; next }
+              /^-- \+goose Down/     { up = 0; next }
+              /^-- \+goose StatementBegin/ { next }
+              /^-- \+goose StatementEnd/   { next }
+              up == 1 { print }
+            ' "$$f" | psql "$$DATABASE_DSN" --echo-errors -q 2>&1 || {
+              echo "FAILED"
+              exit 1
+            }
+          else
+            # Plain SQL file: execute entire file
+            psql "$$DATABASE_DSN" --echo-errors -q -f "$$f" 2>&1 || {
+              echo "FAILED"
+              exit 1
+            }
+          fi
+          echo 'OK'
+        done
+        echo '==> All migrations applied successfully.'
+        echo '==> Tables in database:'
+        PGPASSWORD=netcert psql -h postgres -U netcert -d netcert -c '\dt'
+        echo '==> Users table columns:'
+        PGPASSWORD=netcert psql -h postgres -U netcert -d netcert -c "SELECT column_name FROM information_schema.columns WHERE table_name='users' ORDER BY ordinal_position;"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - netcert-staging
+
+  # ─── Containerlab (Docker-in-Docker) ──────────────────────
+  # Запускает изолированный Docker демон для Containerlab.
+  # Это позволяет запускать cRPD/vMX контейнеры не смешивая их
+  # с основными сервисами платформы.
+  #
+  # Доступ:
+  #   docker exec -it netcert-staging-clab-dind docker ps
+  #   docker compose exec clab-dind containerlab inspect
+  #
+  # Containerlab топик: kind: juniper_crpd image: crpd:24.2R1
+
+  clab-dind:
+    build:
+      context: ../infra
+      dockerfile: Dockerfile.dind
+    image: netcert-dind:latest
+    container_name: netcert-staging-clab-dind
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    ports:
+      # Expose DinD API for remote docker access (optional)
+      - "12376:2376"
+    volumes:
+      # Lab topologies storage
+      - clab-labs:/home/clab
+      # Persist cRPD images
+      - clab-images:/var/lib/docker
+      # Shared SSH keys for device access
+      - clab-ssh:/root/.ssh
+      # Mount grading scripts (read-only) for execution inside DinD
+      - ../backend/labs:/labs:ro
+      # Custom entrypoint wrapper for auto-deploy
+      - ../infra/dind/start.sh:/start.sh:ro
+    tmpfs:
+      - /tmp
+    entrypoint: ["/bin/sh"]
+    command: ["/start.sh"]
+    networks:
+      - netcert-staging
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── Study Sandbox (для интерактивного терминала на /study) ─
+  # Предоставляет Alpine shell для практики Linux-команд.
+
+  sandbox:
+    build:
+      context: ../infra
+      dockerfile: Dockerfile.sandbox
+    image: netcert-sandbox:latest
+    container_name: netcert-staging-sandbox
+    environment:
+      TERM: xterm-256color
+    stdin_open: true
+    tty: true
+    networks:
+      - netcert-staging
+    restart: unless-stopped
+
+  # ─── FRRouting (FRR) Playground ──────────────────────────
+  # Free Range Routing — демон с реальным routing CLI (vtysh).
+  # Доступен всегда, без необходимости pull cRPD.
+  # Позволяет практиковать show-команды, BGP, OSPF, IS-IS.
+  #
+  # Подключение: docker exec -it netcert-staging-frr vtysh
+  #
+  # Документация: https://frrouting.org/
+
+  frr:
+    image: frrouting/frr:latest
+    container_name: netcert-staging-frr
+    privileged: true
+    environment:
+      SHELL: /bin/bash
+    stdin_open: true
+    tty: true
+    volumes:
+      # Mount FRR config files for BGP/OSPF demo (writable for 'write memory')
+      - ../infra/frr/config/frr.conf:/etc/frr/frr.conf
+      - ../infra/frr/config/daemons:/etc/frr/daemons
+      - ../infra/frr/config/vtysh.conf:/etc/frr/vtysh.conf
+    # Create dummy interfaces before FRR starts, then run default docker-start
+    command: >
+      sh -c "
+      ip link add dummy0 type dummy 2>/dev/null;
+      ip link add dummy1 type dummy 2>/dev/null;
+      ip link add dummy2 type dummy 2>/dev/null;
+      exec /usr/lib/frr/docker-start
+      "
+    networks:
+      - netcert-staging
+    restart: unless-stopped
+
+  # ─── Go API Server (Lab Orchestrator) ─────────────────────
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../infra/Dockerfile.backend
+    container_name: netcert-staging-backend
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "8080"
+      DATABASE_DSN: "postgres://netcert:netcert@postgres:5432/netcert?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: "netcert-staging-secret-change-in-production"
+      # Lab Orchestrator configuration
+      # containerlab roadmap: works via DOCKER_HOST (remote DinD daemon)
+      CLAB_BIN_PATH: "containerlab"
+      CLAB_BASE_DIR: "/netcert-labs"
+      CLAB_DIND_HOST: "clab-dind"
+      CLAB_WS_HOST: "0.0.0.0"
+      CLAB_WS_PORT: "8090"
+      # Point containerlab/Docker to the DinD daemon
+      DOCKER_HOST: "tcp://clab-dind:2376"
+      DOCKER_TLS_VERIFY: ""
+      # Allow CORS for frontend on staging
+      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001,http://netcert.local:3000"
+    volumes:
+      # Shared lab data volume (mounted by both backend and DinD)
+      - clab-labs:/netcert-labs
+      # Mount lab files for grading scripts
+      - ../backend/labs:/app/labs:ro
+      # Mount host Docker socket to run docker exec into clab-dind for grading
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - netcert-staging
+
+  # ─── Frontend (Next.js) ───────────────────────────────────
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../infra/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: "http://backend:8080/api/v1"
+    container_name: netcert-staging-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: "http://backend:8080/api/v1"
+    depends_on:
+      - backend
+    networks:
+      - netcert-staging
+
+# ─── Volumes ────────────────────────────────────────────────
+
+volumes:
+  pgdata:
+  redis-data:
+  clab-labs:
+  clab-images:
+  clab-ssh:
+
+# ─── Networks ───────────────────────────────────────────────
+
+networks:
+  netcert-staging:
+    name: netcert-staging
+    driver: bridge
