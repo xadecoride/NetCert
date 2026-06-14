@@ -43,3 +43,7 @@ redis-data/
 *.pid.lock
 coverage/
 session_f28aaef8-eed9-4556-b354-77ead82c3cd1.zip
+PLAN.md
+CLAUDE.md
+AUDIT_REPORT.md
+AUDIT_QUESTIONS_LABS.md
