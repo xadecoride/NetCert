@@ -19,6 +19,7 @@ func NewRouter(
 	examUC *usecase.ExamUseCase,
 	explanationUC *usecase.ExplanationUseCase,
 	labUC *usecase.LabUseCase,
+	quickLabUC *usecase.QuickLabUseCase,
 	studyProgressUC *usecase.StudyProgressUseCase,
 	jwtManager *jwtpkg.JWTManager,
 	appEnv string,
@@ -56,7 +57,7 @@ func NewRouter(
 	// Lab WebSocket endpoints (public for now; will add auth later)
 	sandboxHandler := ws.NewSandboxHandler(nil)
 	if labUC != nil {
-		sshProxy := ws.NewSSHProxy(labUC)
+		sshProxy := ws.NewSSHProxy(labUC, "")
 		r.Route("/ws", func(r chi.Router) {
 			sshProxy.RegisterRoutes(r)
 			sandboxHandler.RegisterRoutes(r)
@@ -122,6 +123,13 @@ func NewRouter(
 				r.Post("/labs/submissions/{submissionId}/resume", labHandler.ResumeLab)
 				r.Post("/labs/submissions/{submissionId}/submit-module", labHandler.SubmitModule)
 				r.Get("/labs/submissions/{submissionId}/scores", labHandler.GetScores)
+			}
+
+			// Quick Labs
+			if quickLabUC != nil {
+				quickLabHandler := NewQuickLabHandler(quickLabUC)
+				r.Get("/quick-labs", quickLabHandler.ListQuickLabs)
+				r.Get("/quick-labs/{labId}", quickLabHandler.GetQuickLab)
 			}
 
 			// Study Progress

@@ -1,3 +1,4 @@
+-- +goose Up
 -- NetCert Pro v6 -- 10,204 truly unique questions
 -- Removes all old questions and replaces with v6 generated set
 
@@ -42550,3 +42551,6 @@ FROM questions q WHERE q.content_hash = '5ad33a78a889c56c_gen_v6' AND NOT EXISTS
 INSERT INTO explanations (id, question_id, version, sections, summary, created_at)
 SELECT gen_random_uuid(), q.id, 1, '[{"type": "tldr", "title": "TL;DR", "content": "Given: A switch port configured with port-security and maximum MAC count 2. A third device attempts to connect. Result: The port enters err-disable state and blocks traffic."}, {"type": "distractor_breakdown", "title": "Answer Breakdown", "content": "**A** - Incorrect.\n\n**B** - Incorrect.\n\n**D** - Incorrect."}]', 'Given: A switch port configured with port-security and maximum MAC count 2. A third device attempts to connect. Result: The port enters err-disable state and blocks traffic.', NOW()
 FROM questions q WHERE q.content_hash = '11ee74e1a60a0883_gen_v6' AND NOT EXISTS (SELECT 1 FROM explanations e WHERE e.question_id = q.id);
+
+-- +goose Down
+-- Irreversible seed migration: manual cleanup required if needed.

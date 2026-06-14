@@ -7,7 +7,7 @@
 -- This migration creates the micro_labs table (originally 042)
 -- plus columns missing from domain.Lab: max_score, passing_score, num_devices.
 
--- Micro-labs table
+-- Micro-labs table (same shape as 042 so it can be created idempotently)
 CREATE TABLE IF NOT EXISTS micro_labs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     slug VARCHAR(100) UNIQUE NOT NULL,
@@ -27,14 +27,15 @@ CREATE TABLE IF NOT EXISTS micro_labs (
     is_troubleshooting BOOLEAN DEFAULT FALSE,
     track_id UUID REFERENCES tracks(id) ON DELETE SET NULL,
     lab_directory VARCHAR(200) NOT NULL,
-    -- Domain alignment columns (missing from original 042 schema)
-    max_score INT NOT NULL DEFAULT 100,
-    passing_score INT NOT NULL DEFAULT 70,
-    num_devices INT NOT NULL DEFAULT 0,
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Domain alignment columns (missing from original 042 schema)
+ALTER TABLE micro_labs ADD COLUMN IF NOT EXISTS max_score INT NOT NULL DEFAULT 100;
+ALTER TABLE micro_labs ADD COLUMN IF NOT EXISTS passing_score INT NOT NULL DEFAULT 70;
+ALTER TABLE micro_labs ADD COLUMN IF NOT EXISTS num_devices INT NOT NULL DEFAULT 0;
 
 -- Junction table: micro-lab ↔ study chapter
 CREATE TABLE IF NOT EXISTS chapter_micro_labs (

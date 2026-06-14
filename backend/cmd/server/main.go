@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/netcert/backend/internal/config"
@@ -17,6 +19,7 @@ import (
 	jwtpkg "github.com/netcert/backend/internal/pkg/jwt"
 	"github.com/netcert/backend/internal/repository/postgres"
 	"github.com/netcert/backend/internal/usecase"
+	"github.com/netcert/backend/migrations"
 )
 
 func main() {
@@ -51,12 +54,19 @@ func main() {
 		slog.Warn("Server will start, but database features will be unavailable")
 	}
 
+	// Apply database migrations automatically on startup
+	if err := runMigrations(cfg.Database.DSN); err != nil {
+		slog.Error("Failed to apply database migrations", slog.String("error", err.Error()))
+		os.Exit(1)
+	}
+
 	// Initialize repositories
 	userRepo := postgres.NewUserRepository(pool)
 	examRepo := postgres.NewExamRepository(pool)
 	attemptRepo := postgres.NewAttemptRepository(pool)
 	explanationRepo := postgres.NewExplanationRepository(pool)
 	labRepo := postgres.NewLabRepository(pool)
+	quickLabRepo := postgres.NewQuickLabRepository(pool)
 	studyProgressRepo := postgres.NewStudyProgressRepository(pool)
 
 	// Initialize JWT manager
@@ -76,13 +86,14 @@ func main() {
 		getEnv("DIND_CONTAINER", "netcert-staging-clab-dind"),
 		getEnv("HOST_DOCKER_SOCKET", "/var/run/docker.sock"),
 	)
+	quickLabUC := usecase.NewQuickLabUseCase(quickLabRepo)
 
 	// Initialize study progress use case
 	studyProgressUC := usecase.NewStudyProgressUseCase(studyProgressRepo)
 
 	// Create router with all dependencies
 	// WebSocket SSH proxy routes are mounted at /ws/ inside NewRouter
-	router := delivery.NewRouter(authUC, examUC, explanationUC, labUC, studyProgressUC, jwtManager, getEnv("APP_ENV", "development"))
+	router := delivery.NewRouter(authUC, examUC, explanationUC, labUC, quickLabUC, studyProgressUC, jwtManager, getEnv("APP_ENV", "development"))
 
 	// Create server
 	srv := &http.Server{
@@ -109,6 +120,24 @@ func main() {
 		os.Exit(1)
 	}
 	slog.Info("Server stopped")
+}
+
+// runMigrations opens a sql.DB connection and applies pending goose migrations.
+func runMigrations(dsn string) error {
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		return fmt.Errorf("unable to open migration database connection: %w", err)
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("unable to ping database for migrations: %w", err)
+	}
+
+	if err := migrations.Up(db); err != nil {
+		return err
+	}
+	return nil
 }
 
 // getEnv returns the value of an environment variable or a default value if not set.

@@ -82,3 +82,25 @@
 ### Шаг 3: E2E тест ✅ ВЫПОЛНЕН
 - `go test ./internal/usecase/` — **10/10 тестов проходят**.
 - `go build ./...` — компилируется без ошибок.
+
+## Статус исправлений (2026-06-13)
+
+### Автоматизация миграций и ошибка 500 при входе ✅ ВЫПОЛНЕН
+- **Причина 500 на `/auth/login`:** в `users` отсутствовал столбец `preferences` (добавлен миграцией `060`), поэтому `FindByEmail` падал с SQL-ошибкой на свежих/частично применённых БД.
+- **Исправление:** миграции теперь встроены в бинарник (`backend/migrations/embed.go` + `embed.FS`) и применяются автоматически при старте сервера через `goose.Up` (`backend/cmd/server/main.go`).
+- **Исправленные миграции:**
+  - `026_create_explanations_table.sql` — обёрнут PL/pgSQL в `StatementBegin/End`.
+  - `028_v6_questions.sql` — добавлены `-- +goose Up` / `-- +goose Down`.
+  - `065_micro_labs.sql` — `CREATE TABLE IF NOT EXISTS` + `ADD COLUMN IF NOT EXISTS` для `max_score`, `passing_score`, `num_devices`; `ON CONFLICT DO NOTHING` для сидов.
+  - `070_quick_labs.sql` — исправлен порядок `-- +goose Down` / `StatementEnd`.
+- **Проверка:** свежая БД дотягивается до версии **70**; логин возвращает 200.
+
+### Локализация `/study` и `/dashboard` ✅ ВЫПОЛНЕН
+- **Проблема:** страница `/study` была на русском языке в исходном коде; `/dashboard` отображалась на русском по умолчанию.
+- **Исправление:**
+  - Весь контент `/study` вынесен в `frontend/lib/i18n/study-content.ts` (`studyEn` / `studyRu`).
+  - Добавлен хук `useStudyContent()` — возвращает контент в зависимости от текущей локали.
+  - Все строки интерфейса `/study` заменены на ключи `studyPage.*` в `en.ts` и `ru.ts`.
+  - Используется namespace `studyPage` (не `study`), чтобы избежать конфликта с `nav.study`.
+  - `/dashboard` уже использовала `useTranslation()`; проверено, что захардкоженных русских строк нет.
+- **Проверка:** `npm run build` в `frontend/` проходит успешно; по умолчанию `/study` отображается на английском, при `locale === "ru"` — на русском.

@@ -175,4 +175,16 @@ export const labsApi = {
 
   stopSubmission: (submissionId: string) =>
     request<any>(`/labs/submissions/${submissionId}/stop`, { method: "POST" }),
+
+  getScores: (submissionId: string) =>
+    request<any[]>(`/labs/submissions/${submissionId}/scores`),
+};
+
+// Quick Labs API
+export const quickLabsApi = {
+  list: (trackId?: string) =>
+    request<any[]>(`/quick-labs${trackId ? `?track_id=${trackId}` : ""}`),
+
+  get: (labId: string) =>
+    request<any>(`/quick-labs/${labId}`),
 };

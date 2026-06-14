@@ -22,7 +22,7 @@ const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardHeader.displayName = "CardHeader";
 
-const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
     <h3 ref={ref} className={cn("font-semibold text-lg tracking-tight text-zinc-900 dark:text-zinc-100", className)} {...props} />
   )
@@ -50,4 +50,32 @@ const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDiv
 );
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+const GlassCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "glass-card",
+        className
+      )}
+      {...props}
+    />
+  )
+);
+GlassCard.displayName = "GlassCard";
+
+const BentoCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "bento-card",
+        className
+      )}
+      {...props}
+    />
+  )
+);
+BentoCard.displayName = "BentoCard";
+
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, GlassCard, BentoCard };

@@ -3080,3 +3080,58 @@ import (
 > 4. ✅ Написать архитектурный план в PLAN.md (Sections 18.1–18.13)  
 > 5. 🔲 Подготовить Containerlab тестовую среду (staging)  
 > 6. 🔲 Начать Фазу 1: Micro-Labs + Lab Orchestrator foundation
+
+---
+
+# Приложение: Актуализация реализации — июнь 2026
+
+> Дата обновления: 2026-06-13  
+> Статус: MVP в разработке; часть критических инфраструктурных и UX-проблем устранена.
+
+## 1. Автоматизация миграций и устранение ошибки 500 при входе
+
+### Что изменилось
+- Все SQL-миграции (`backend/migrations/*.sql`) встроены в бинарник через `embed.FS` (`backend/migrations/embed.go`).
+- Сервер Go автоматически применяет `goose.Up` на старте (`backend/cmd/server/main.go:runMigrations`) и завершается с ошибкой, если миграции не удалось применить.
+- Это устранило причину HTTP 500 на `/auth/login`: столбец `preferences` (добавлен миграцией `060`) теперь гарантированно существует на любой свежей БД.
+
+### Исправленные миграционные файлы
+| Файл | Проблема | Решение |
+|------|----------|---------|
+| `026_create_explanations_table.sql` | PL/pgSQL-функция без `StatementBegin/End` | Обёрнуто в `-- +goose StatementBegin` / `-- +goose StatementEnd` |
+| `028_v6_questions.sql` | Отсутствовали `-- +goose Up` / `-- +goose Down` | Добавлены аннотации |
+| `065_micro_labs.sql` | Конфликт с `042_micro_labs.sql`; не хватало колонок `max_score`, `passing_score`, `num_devices` | `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ADD COLUMN IF NOT EXISTS`; сиды `ON CONFLICT DO NOTHING` |
+| `070_quick_labs.sql` | `-- +goose Down` стоял до `StatementEnd` | Исправлен порядок аннотаций |
+
+### Проверка
+- `go build ./cmd/server/` — успешно.
+- `go test ./internal/usecase/` — 10/10 тестов проходят.
+- Свежая PostgreSQL дотягивается до версии **70** при старте сервера.
+
+## 2. Локализация фронтенда
+
+### Текущая архитектура i18n
+- Реализован кастомный контекст `frontend/lib/i18n/context.tsx`.
+- Поддерживаемые локали: `en` (по умолчанию) и `ru`.
+- Словари: `frontend/lib/i18n/locales/en.ts` и `ru.ts`.
+
+### `/study`
+- Весь контент гайдов и CLI-справочника вынесен в `frontend/lib/i18n/study-content.ts` (`studyEn` / `studyRu`).
+- Добавлен хук `frontend/lib/i18n/use-study-content.ts`, возвращающий контент по активной локали.
+- Все строки интерфейса в `frontend/app/study/page.tsx` заменены на ключи `studyPage.*`.
+- Используется namespace `studyPage`, чтобы избежать конфликта с `nav.study`.
+- По умолчанию страница отображается на английском; переключение на русский происходит через `locale === "ru"`.
+
+### `/dashboard`
+- Проверено, что страница уже использует `useTranslation()` и не содержит захардкоженных русских строк.
+- Даты форматируются в зависимости от локали (`en-US` / `ru-RU`).
+
+### Проверка
+- `npm run build` в `frontend/` — успешно.
+
+## 3. Следующие приоритеты
+1. Реализовать refresh-token rotation и endpoint `POST /auth/refresh`.
+2. Продолжить перевод оставшихся русских строк в миграциях/сидах на английский (или вынести в i18n для админ-контента).
+3. Уменьшить размер миграции `028_v6_questions.sql` (16 МБ) — перейти на `COPY FROM` или внешние seed-файлы.
+4. Начать внедрение TanStack Query / next-intl по плану, если приоритет i18n/server-state вырастет.
+5. Развернуть staging-окружение с Containerlab для запуска Micro-Labs.

@@ -191,15 +191,69 @@ Auditor: Hermes Agent
 | CRITICAL | Corrupted questions (empty options, duplicates) | migrations/063_fix_questions.sql | 🔄 FIXED |
 | CRITICAL | micro_labs table missing from DB | migrations/065_micro_labs.sql | 🔄 FIXED |
 
+## 9. Runtime Stability — Login 500 & Migration Automation (2026-06-13)
+
+### CRITICAL: HTTP 500 on Login — FIXED
+- **Root cause:** `preferences` column (added in migration `060`) was missing on fresh/partially-migrated databases. `UserRepository.FindByEmail` selected it, causing a SQL error that propagated as a 500 on `/auth/login`.
+- **Fix:** Migrations are now embedded and applied automatically on server startup via `github.com/pressly/goose/v3`.
+  - `backend/migrations/embed.go` exposes `Up(db *sql.DB)` over an `embed.FS` of all `*.sql` files.
+  - `backend/cmd/server/main.go` calls `runMigrations(cfg.Database.DSN)` before initializing repositories and exits with a structured log if migrations fail.
+- **Verification:**
+  - `go build ./cmd/server/` succeeds.
+  - `go test ./internal/usecase/` passes (10/10).
+  - Fresh PostgreSQL reaches migration version **70** on startup.
+
+### CRITICAL: Migration File Consistency — FIXED
+Several files had invalid or incomplete goose annotations that broke automated parsing:
+
+| Migration | Problem | Fix |
+|-----------|---------|-----|
+| `026_create_explanations_table.sql` | PL/pgSQL function created inside a migration without `StatementBegin/End` | Wrapped `CREATE OR REPLACE FUNCTION ...` in `-- +goose StatementBegin` / `-- +goose StatementEnd` |
+| `028_v6_questions.sql` | Missing `-- +goose Up` / `-- +goose Down` annotations | Added at top and bottom of file |
+| `065_micro_labs.sql` | `CREATE TABLE` conflicted with existing `042_micro_labs.sql`; `max_score/passing_score/num_devices` columns were missing | Changed to `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ADD COLUMN IF NOT EXISTS`; seed uses `ON CONFLICT (slug) DO NOTHING` |
+| `070_quick_labs.sql` | Misplaced `-- +goose Down` and missing `-- +goose StatementEnd` | Re-ordered annotations so each `StatementBegin` is closed before the next goose directive |
+
+### Frontend i18n: `/study` & `/dashboard` — FIXED
+- **Problem:** `frontend/app/study/page.tsx` contained hardcoded Russian technology guides, quick-reference tables, and labels. `/dashboard` was reported as Russian by default.
+- **Fix:**
+  - Extracted all study content into `frontend/lib/i18n/study-content.ts` with `studyEn` and `studyRu` variants.
+  - Added `frontend/lib/i18n/use-study-content.ts` hook that returns content based on active locale.
+  - Replaced every hardcoded UI string in `frontend/app/study/page.tsx` with `t("studyPage.*")` keys.
+  - Locale dictionaries (`frontend/lib/i18n/locales/en.ts`, `ru.ts`) now use a `studyPage` namespace (avoiding collision with `nav.study`).
+  - `/dashboard` already used `useTranslation()` with English defaults; verified no hardcoded Russian strings remain.
+- **Verification:** `npm run build` in `frontend/` completes successfully; `/study` renders in English by default and switches to Russian when `locale === "ru"`.
+
+## Summary of Issues (Updated 2026-06-13)
+
+| Priority | Issue | File(s) | Status |
+|----------|-------|---------|--------|
+| ~~CRITICAL~~ | ~~DI violation in AuthUseCase~~ | ~~usecase/auth_usecase.go~~ | ✅ FALSE POSITIVE |
+| CRITICAL | DI violation in Exam/Explanation/StudyProgress UseCases | usecase/*.go | 🔄 FIXED |
+| ~~CRITICAL~~ | ~~HTTP 500 on login (missing `preferences` column)~~ | ~~repository/postgres/user_repo.go, migrations~~ | 🔄 FIXED |
+| CRITICAL | Hardcoded JWT secret fallback | config/config.go, docker-compose.yml | ✅ SAFE BY DESIGN (config.go blocks in prod) |
+| HIGH | No refresh token rotation | pkg/jwt/jwt.go, usecase/auth_usecase.go | ⏳ PENDING |
+| ~~HIGH~~ | ~~WebSocket origin check disabled~~ | ~~delivery/ws/ssh_proxy.go~~ | 🔄 FIXED |
+| ~~HIGH~~ | ~~DevLogin exposed in production~~ | ~~delivery/http/router.go~~ | ✅ FIXED |
+| ~~HIGH~~ | ~~No unit tests~~ | ~~backend/tests/~~ | 🔄 FIXED |
+| ~~MEDIUM~~ | ~~Standard log instead of slog~~ | ~~Multiple files~~ | 🔄 FIXED |
+| ~~MEDIUM~~ | ~~Non-root user missing in Dockerfile~~ | ~~infra/Dockerfile.backend~~ | 🔄 FIXED |
+| ~~MEDIUM~~ | ~~No backend healthcheck in compose~~ | ~~infra/docker-compose.yml~~ | 🔄 FIXED |
+| ~~MEDIUM~~ | ~~Migration files unparsable / incomplete~~ | ~~backend/migrations/*.sql~~ | 🔄 FIXED |
+| LOW | Large seed migration file | migrations/028_v6_questions.sql | ⏳ PENDING |
+| ~~LOW~~ | ~~Missing DB indexes~~ | ~~migrations/~~ | 🔄 FIXED |
+| ~~CRITICAL~~ | ~~Corrupted questions (empty options, duplicates)~~ | ~~migrations/063_fix_questions.sql~~ | 🔄 FIXED |
+| ~~CRITICAL~~ | ~~micro_labs table missing from DB~~ | ~~migrations/065_micro_labs.sql~~ | 🔄 FIXED |
+
 ## Recommendations Priority Order
 
-1. Fix DI violations (introduce repository interfaces)
+1. Fix DI violations (introduce repository interfaces) ✅
 2. Implement refresh token rotation + revocation
-3. Remove/disable DevLogin in production
-4. Configure WebSocket origin validation
-5. Migrate to slog structured logging
-6. Add unit test suite with testify
-7. Harden Dockerfile (non-root user)
-8. Add backend healthcheck to compose
-9. Optimize large migration files
-10. Add performance indexes
+3. Remove/disable DevLogin in production ✅
+4. Configure WebSocket origin validation ✅
+5. Migrate to slog structured logging ✅
+6. Add unit test suite with testify ✅
+7. Harden Dockerfile (non-root user) ✅
+8. Add backend healthcheck to compose ✅
+9. Automate migration execution on startup ✅
+10. Localize all user-facing pages (continue from `/study`) 🔄
+11. Optimize large migration files

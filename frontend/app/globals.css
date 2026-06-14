@@ -42,6 +42,40 @@
   /* Shadow diffusion */
   --shadow-diffuse: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
   --shadow-diffuse-lg: 0 30px 60px -20px rgba(0, 0, 0, 0.08);
+
+  /* SVG topology palette */
+  --svg-bg: #f4f4f5;
+  --svg-device-router: #18181b;
+  --svg-device-switch: #27272a;
+  --svg-line-active: #10b981;
+  --svg-line-down: #ef4444;
+  --svg-line-warning: #f59e0b;
+  --svg-text: #18181b;
+  --svg-text-secondary: #71717a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --svg-bg: #09090b;
+    --svg-device-router: #e4e4e7;
+    --svg-device-switch: #a1a1aa;
+    --svg-line-active: #34d399;
+    --svg-line-down: #f87171;
+    --svg-line-warning: #fbbf24;
+    --svg-text: #f4f4f5;
+    --svg-text-secondary: #a1a1aa;
+  }
+}
+
+.dark {
+  --svg-bg: #09090b;
+  --svg-device-router: #e4e4e7;
+  --svg-device-switch: #a1a1aa;
+  --svg-line-active: #34d399;
+  --svg-line-down: #f87171;
+  --svg-line-warning: #fbbf24;
+  --svg-text: #f4f4f5;
+  --svg-text-secondary: #a1a1aa;
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
@@ -72,6 +106,35 @@ body {
     background-color: var(--color-zinc-950);
     color: var(--color-zinc-100);
   }
+}
+
+/* ── Noise overlay ─────────────────────────────────────────── */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* ── Kinetic marquee ───────────────────────────────────────── */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* ── Glow utilities ────────────────────────────────────────── */
+.glow-emerald {
+  box-shadow: 0 0 40px -10px rgba(16, 185, 129, 0.4);
+}
+
+.glow-emerald-soft {
+  box-shadow: 0 0 60px -20px rgba(16, 185, 129, 0.25);
 }
 
 /* ── Glass Components ─────────────────────────────────────── */
@@ -172,6 +235,18 @@ body {
   position: fixed;
   inset: 0;
   z-index: 50;
+  background-color: var(--color-zinc-50);
+  color: var(--color-zinc-900);
+}
+
+@media (prefers-color-scheme: dark) {
+  .exam-mode {
+    background-color: var(--color-zinc-950);
+    color: #fff;
+  }
+}
+
+.dark .exam-mode {
   background-color: var(--color-zinc-950);
   color: #fff;
 }
@@ -261,7 +336,6 @@ body {
 
 /* ── Focus ring ────────────────────────────────────────────── */
 *:focus-visible {
-  outline: none;
-  ring: 2px solid var(--color-emerald-500);
-  ring-offset: 2px;
+  outline: 2px solid var(--color-emerald-500);
+  outline-offset: 2px;
 }

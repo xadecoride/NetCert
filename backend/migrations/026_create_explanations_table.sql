@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS explanations (
 );
 
 -- Trigger to auto-update updated_at on row modification
+-- +goose StatementBegin
 CREATE OR REPLACE FUNCTION update_explanations_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -18,6 +19,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
 CREATE TRIGGER trg_explanations_updated_at
     BEFORE UPDATE ON explanations

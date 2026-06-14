@@ -1,8 +1,11 @@
+import { studyRu } from "../study-content";
+
 export const ru: Record<string, any> = {
   // Navigation
   nav: {
     dashboard: "Панель",
-    labs: "Лабы",
+    labs: "Лаборатории",
+    quickLabs: "Быстрые лабы",
     study: "Материалы",
     exams: "Экзамены",
     settings: "Настройки",
@@ -50,6 +53,14 @@ export const ru: Record<string, any> = {
     footer:
       "NetCert — Платформа подготовки к сертификации. Не аффилирована с Juniper Networks или Cisco Systems.",
 
+    statsTitle: "В цифрах",
+    statsSubtitle: "Растущая библиотека вопросов, лабораторий и треков от сетевых инженеров.",
+    statsQuestions: "Вопросов",
+    statsLabs: "Лабораторий",
+    statsTracks: "Треков",
+    statsUsers: "Активных учеников",
+    statsMetrics: "Метрик",
+
     trackEnt: "Enterprise Routing & Switching",
     trackEntDesc: "Корпоративные сети на Junos OS",
     trackSp: "Service Provider",
@@ -88,6 +99,11 @@ export const ru: Record<string, any> = {
     registerSubtitle: "Начните путь к сертификации сегодня",
     haveAccount: "Уже есть аккаунт?",
     signInLink: "Войти",
+
+    acceptTerms: "Я согласен с Условиями использования и Политикой конфиденциальности",
+    acceptTermsRequired: "Необходимо принять условия",
+    passwordTooShort: "Пароль должен быть не менее 8 символов",
+    termsError: "Необходимо принять условия",
   },
 
   // Dashboard
@@ -154,6 +170,9 @@ export const ru: Record<string, any> = {
     unanswered: "Не отвечено",
     flagged: "Отмечено",
     submitExam: "Завершить экзамен",
+    previous: "Назад",
+    next: "Далее",
+    flag: "Отметить",
     congratulations: "Поздравляем!",
     keepPracticing: "Продолжайте практиковаться",
     youPassed: "Вы сдали экзамен!",
@@ -246,6 +265,36 @@ export const ru: Record<string, any> = {
     vendorNuances: "Нюансы вендора",
   },
 
+  // Study page
+  studyPage: {
+    ...studyRu,
+    badge: "Материалы",
+    title: "Учебные материалы",
+    subtitle: "CLI-шпаргалки, конфигурационные гайды и справочники по технологиям",
+    searchPlaceholder: "Поиск гайдов, команд...",
+    allLevels: "Все уровни",
+    allGuides: "Все гайды",
+    incompleteOnly: "Только непройденные",
+    cliReference: "CLI-справочник",
+    backToGuides: "Назад к гайдам",
+    close: "Закрыть",
+    animated: "Анимация",
+    vtysh: "VTYSH",
+    crpd: "cRPD",
+    online: "Онлайн",
+    offline: "Оффлайн",
+    connected: "Подключено",
+    disconnected: "Отключено",
+    checking: "Проверка...",
+    noGuidesFound: "Гайды не найдены",
+    tryChangingFilters: "Попробуйте изменить фильтры или поисковый запрос.",
+    studyProgress: "Прогресс изучения",
+    markAsCompleted: "Отметить как пройденное",
+    completed: "Пройдено",
+    saving: "Сохранение...",
+    copy: "Копировать",
+  },
+
   // Labs page
   labs: {
     badge: "Лаборатории",
@@ -256,6 +305,32 @@ export const ru: Record<string, any> = {
     noLabs: "Нет лабораторных",
     noLabsDesc: "Лабораторные готовятся для этого трека.",
     viewAll: "Все лаборатории",
+  },
+
+  // Quick lab detail
+  quickLab: {
+    tasks: "Задачи",
+    prerequisites: "Необходимые знания",
+    topology: "Топология",
+    pnetlabInstructions: "Инструкции PNETlab",
+    labInfo: "Информация",
+    level: "Уровень",
+    difficulty: "Сложность",
+    technology: "Технология",
+    estimatedTime: "Примерное время",
+    verificationCommands: "Команды проверки",
+    expectedOutput: "Ожидаемый результат",
+    showHint: "Показать подсказку",
+    hideHint: "Скрыть подсказку",
+    showSolution: "Показать решение",
+    hideSolution: "Скрыть решение",
+    solutionCommands: "Команды решения",
+    progress: "Прогресс",
+    startPrompt: "Нажмите «Начать лабу», чтобы открыть задачи.",
+    noTasks: "Для этой лаборатории пока нет задач.",
+    allTasksCompleted: "Все задачи выполнены — отличная работа!",
+    markComplete: "Отметить выполненным",
+    markIncomplete: "Отметить невыполненным",
   },
 
   // Common

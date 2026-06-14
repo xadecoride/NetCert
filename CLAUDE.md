@@ -459,3 +459,28 @@ CREATE TABLE study_module_questions (
   }
 ]
 ```
+
+---
+
+# Актуализация проекта — 2026-06-13
+
+## 1. Автоматические миграции (goose)
+- Все SQL-миграции теперь встроены в бинарник через `embed.FS` (`backend/migrations/embed.go`).
+- Сервер применяет `goose.Up` автоматически на старте (`backend/cmd/server/main.go:runMigrations`).
+- Это устранило ошибку 500 при входе, вызванную отсутствием столбца `preferences` на свежих/частично мигрированных БД.
+- Особенности goose, которые уже учтены в файлах:
+  - PL/pgSQL-блоки оборачиваются в `-- +goose StatementBegin` / `-- +goose StatementEnd`.
+  - Каждый файл начинается с `-- +goose Up` и завершается `-- +goose Down`.
+  - `StatementEnd` должен стоять до следующей goose-аннотации.
+
+## 2. Локализация фронтенда (en по умолчанию, ru через настройки)
+- Кастомный i18n-контекст: `frontend/lib/i18n/context.tsx` (`Locale = "en" | "ru"`, default `en`).
+- Страница `/study` полностью локализована:
+  - Контент гайдов и CLI-справочник вынесены в `frontend/lib/i18n/study-content.ts` (`studyEn` / `studyRu`).
+  - Хук `useStudyContent()` выбирает контент по текущей локали.
+  - Все UI-строки используют namespace `studyPage.*` (не `study`, чтобы не конфликтовать с `nav.study`).
+- `/dashboard` уже использует `useTranslation()`; захардкоженных русских строк нет.
+
+## 3. Проверенные команды
+- Backend: `go build ./cmd/server/` и `go test ./internal/usecase/` — успешно.
+- Frontend: `npm run build` — успешно.

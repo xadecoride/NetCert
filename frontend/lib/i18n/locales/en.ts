@@ -1,8 +1,11 @@
+import { studyEn } from "../study-content";
+
 export const en = {
   // Navigation
   nav: {
     dashboard: "Dashboard",
     labs: "Labs",
+    quickLabs: "Quick Labs",
     study: "Materials",
     exams: "Exams",
     settings: "Settings",
@@ -50,6 +53,14 @@ export const en = {
     footer:
       "NetCert — Certification Preparation Platform. Not affiliated with Juniper Networks or Cisco Systems.",
 
+    statsTitle: "By the numbers",
+    statsSubtitle: "A growing library of questions, labs, and tracks built by network engineers.",
+    statsQuestions: "Questions",
+    statsLabs: "Labs",
+    statsTracks: "Tracks",
+    statsUsers: "Active learners",
+    statsMetrics: "Metrics",
+
     trackEnt: "Enterprise Routing & Switching",
     trackEntDesc: "Core enterprise networking with Junos OS",
     trackSp: "Service Provider",
@@ -88,6 +99,11 @@ export const en = {
     registerSubtitle: "Start your certification journey today",
     haveAccount: "Already have an account?",
     signInLink: "Sign in",
+
+    acceptTerms: "I agree to the Terms of Service and Privacy Policy",
+    acceptTermsRequired: "You must accept the terms to continue",
+    passwordTooShort: "Password must be at least 8 characters",
+    termsError: "You must accept the terms",
   },
 
   // Dashboard
@@ -154,6 +170,9 @@ export const en = {
     unanswered: "Unanswered",
     flagged: "Flagged",
     submitExam: "Submit Exam",
+    previous: "Previous",
+    next: "Next",
+    flag: "Flag",
     congratulations: "Congratulations!",
     keepPracticing: "Keep Practicing",
     youPassed: "You passed the exam!",
@@ -246,6 +265,36 @@ export const en = {
     vendorNuances: "Vendor-Specific Nuances",
   },
 
+  // Study page
+  studyPage: {
+    ...studyEn,
+    badge: "Study Materials",
+    title: "Study Materials",
+    subtitle: "CLI cheat sheets, configuration guides, and technology references",
+    searchPlaceholder: "Search guides, commands...",
+    allLevels: "All Levels",
+    allGuides: "All guides",
+    incompleteOnly: "Incomplete only",
+    cliReference: "CLI Reference",
+    backToGuides: "Back to guides",
+    close: "Close",
+    animated: "Animated",
+    vtysh: "VTYSH",
+    crpd: "cRPD",
+    online: "Online",
+    offline: "Offline",
+    connected: "Connected",
+    disconnected: "Disconnected",
+    checking: "Checking...",
+    noGuidesFound: "No guides found",
+    tryChangingFilters: "Try changing filters or search query.",
+    studyProgress: "Study Progress",
+    markAsCompleted: "Mark as completed",
+    completed: "Completed",
+    saving: "Saving...",
+    copy: "Copy",
+  },
+
   // Labs page
   labs: {
     badge: "Labs",
@@ -256,6 +305,32 @@ export const en = {
     noLabs: "No labs available",
     noLabsDesc: "Labs are being prepared for this track.",
     viewAll: "View all labs",
+  },
+
+  // Quick lab detail
+  quickLab: {
+    tasks: "Tasks",
+    prerequisites: "Prerequisites",
+    topology: "Topology",
+    pnetlabInstructions: "PNETlab Instructions",
+    labInfo: "Lab Info",
+    level: "Level",
+    difficulty: "Difficulty",
+    technology: "Technology",
+    estimatedTime: "Estimated time",
+    verificationCommands: "Verification commands",
+    expectedOutput: "Expected output",
+    showHint: "Show hint",
+    hideHint: "Hide hint",
+    showSolution: "Show solution",
+    hideSolution: "Hide solution",
+    solutionCommands: "Solution commands",
+    progress: "Progress",
+    startPrompt: "Press Start Lab to reveal the guided tasks.",
+    noTasks: "No tasks available for this lab.",
+    allTasksCompleted: "All tasks completed — great job!",
+    markComplete: "Mark as completed",
+    markIncomplete: "Mark as not completed",
   },
 
   // Common
