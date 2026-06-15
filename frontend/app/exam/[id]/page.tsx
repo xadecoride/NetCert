@@ -342,8 +342,10 @@ export default function ExamSessionPage() {
 
   // Results
   if (completed && result) {
-    const score = result?.score || 0;
-    const passed = score >= (exam?.passing_score || 65);
+    const rawScore = Number.isFinite(result?.score) ? result.score : 0;
+    const score = Math.round(rawScore);
+    const passingScore = Number.isFinite(exam?.passing_score) ? exam.passing_score : 65;
+    const passed = rawScore >= passingScore;
 
     return (
       <div className="min-h-[100dvh] flex items-center justify-center bg-zinc-950 text-white px-4">
@@ -367,7 +369,7 @@ export default function ExamSessionPage() {
           <p className="text-zinc-400 mb-6">
             {passed ? t("exam.youPassed") : t("exam.youFailed")}
           </p>
-          <div className="text-6xl font-bold tracking-tighter mb-2 text-white">{Math.round(score)}%</div>
+          <div className="text-6xl font-bold tracking-tighter mb-2 text-white">{score}%</div>
           <p className="text-zinc-500 mb-8">{exam?.passing_score || 65}{t("exam.requiredToPass")}</p>
           <div className="flex justify-center gap-4">
             <Button variant="outline" onClick={() => router.push(`/review/${attempt?.id}`)}>

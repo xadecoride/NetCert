@@ -58,7 +58,10 @@ type AttemptReview struct {
 // AttemptWithDetails combines attempt data with questions and user answers for review
 type AttemptWithDetails struct {
 	Attempt
-	Questions []AttemptQuestionWithAnswer `json:"questions"`
+	ExamName     string    `json:"exam_name,omitempty"`
+	ExamCode     string    `json:"exam_code,omitempty"`
+	PassingScore float64   `json:"passing_score,omitempty"`
+	Questions    []AttemptQuestionWithAnswer `json:"questions"`
 }
 
 type AttemptQuestionWithAnswer struct {

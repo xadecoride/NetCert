@@ -260,8 +260,10 @@ function ReviewDetailPageContent() {
 
   const attempt = data;
   const questions: ReviewQuestion[] = attempt.questions || [];
-  const score = attempt.score != null ? Math.round(attempt.score) : 0;
-  const passed = score >= 70;
+  const rawScore = Number.isFinite(attempt.score) ? attempt.score : 0;
+  const score = Math.round(rawScore);
+  const passingScore = Number.isFinite(attempt.passing_score) ? attempt.passing_score : 70;
+  const passed = rawScore >= passingScore;
 
   return (
     <PageShell className="min-h-[100dvh]">

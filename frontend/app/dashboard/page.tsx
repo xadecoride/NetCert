@@ -146,7 +146,9 @@ export default function DashboardPage() {
   const passedAttempts = history.filter((a) => a.score && a.score >= 70).length;
   const avgScore =
     totalAttempts > 0
-      ? Math.round(history.reduce((s, a) => s + (a.score || 0), 0) / totalAttempts)
+      ? Math.round(
+          history.reduce((s, a) => s + (Number.isFinite(a.score) ? a.score : 0), 0) / totalAttempts
+        )
       : 0;
   const completedLabs = labSessions.filter((l) => l.status === "completed" || l.status === "graded").length;
 
@@ -154,7 +156,7 @@ export default function DashboardPage() {
     .slice(0, 7)
     .map((a, i) => ({
       name: `T${i + 1}`,
-      score: Math.round(a.score || 0),
+      score: Math.round(Number.isFinite(a.score) ? a.score : 0),
       date: formatDate(locale, a.started_at),
     }))
     .reverse();

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { useTranslation } from "@/lib/i18n/context";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { MobileNav } from "./mobile-nav";
 import {
@@ -27,8 +27,15 @@ export function Header() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { t, locale, setLocale } = useTranslation();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const currentTheme = mounted ? resolvedTheme : "dark";
 
   const navLinks = [
     { href: "/dashboard", label: t("nav.dashboard"), icon: Layout },
@@ -40,7 +47,7 @@ export function Header() {
 
   if (pathname === "/" || pathname?.startsWith("/exam/")) return <MobileNav />;
 
-  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+  const toggleTheme = () => setTheme(currentTheme === "dark" ? "light" : "dark");
   const toggleLocale = () => setLocale(locale === "en" ? "ru" : "en");
 
   return (
@@ -92,7 +99,7 @@ export function Header() {
                 className="hidden md:flex h-10 w-10 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
                 aria-label="Toggle theme"
               >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {currentTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </button>
               <button
                 onClick={toggleLocale}
@@ -174,8 +181,8 @@ export function Header() {
                     onClick={toggleTheme}
                     className="flex flex-1 items-center justify-center gap-2 py-2 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-sm"
                   >
-                    {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                    {theme === "dark" ? "Light" : "Dark"}
+                    {currentTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                    {currentTheme === "dark" ? "Light" : "Dark"}
                   </button>
                   <button
                     onClick={toggleLocale}

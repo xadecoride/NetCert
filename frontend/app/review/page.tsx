@@ -59,14 +59,13 @@ function ReviewListPageContent() {
   const stats = useMemo(() => {
     const total = history.length;
     const completed = history.filter((a) => a.status === "completed" || a.completed_at).length;
-    const passed = history.filter((a) => (a.score || 0) >= 70).length;
+    const scored = history.filter((a) => Number.isFinite(a.score));
+    const passed = scored.filter((a) => a.score >= (a.passing_score || 70)).length;
     const avg =
-      completed > 0
+      scored.length > 0
         ? Math.round(
-            history
-              .filter((a) => a.score != null)
-              .reduce((sum, a) => sum + (a.score || 0), 0) /
-              completed
+            scored.reduce((sum, a) => sum + (Number.isFinite(a.score) ? a.score : 0), 0) /
+              scored.length
           )
         : 0;
     return { total, completed, passed, avg };
@@ -147,7 +146,9 @@ function ReviewListPageContent() {
         >
           <AnimatePresence mode="popLayout">
             {history.map((attempt) => {
-              const passed = attempt.score != null && attempt.score >= 70;
+              const rawScore = Number.isFinite(attempt.score) ? attempt.score : null;
+              const passingScore = Number.isFinite(attempt.passing_score) ? attempt.passing_score : 70;
+              const passed = rawScore != null && rawScore >= passingScore;
               const completed = attempt.status === "completed" || attempt.completed_at;
               return (
                 <motion.div key={attempt.id} layout variants={fadeInUp} transition={springTransition}>
@@ -180,7 +181,7 @@ function ReviewListPageContent() {
                               ) : (
                                 <Warning className="h-4 w-4 text-amber-500" weight="fill" />
                               )}
-                              {attempt.score != null ? `${Math.round(attempt.score)}%` : "—"}
+                              {rawScore != null ? `${Math.round(rawScore)}%` : "—"}
                             </span>
                             <span className="flex items-center gap-1.5">
                               <Clock className="h-3.5 w-3.5" weight="regular" />

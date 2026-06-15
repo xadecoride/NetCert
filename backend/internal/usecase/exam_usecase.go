@@ -229,11 +229,24 @@ func (uc *ExamUseCase) CompleteAttempt(ctx context.Context, attemptID uuid.UUID,
 		return nil, errors.New("unauthorized")
 	}
 
-	if attempt.QuestionsTotal > 0 {
-		score := float64(attempt.QuestionsCorrect) / float64(attempt.QuestionsTotal) * 100
-		if err := uc.attemptRepo.Complete(ctx, attemptID, score, attempt.QuestionsCorrect, attempt.QuestionsAnswered); err != nil {
-			return nil, err
-		}
+	if attempt.Status == domain.AttemptStatusCompleted || attempt.Status == domain.AttemptStatusTimedOut {
+		return nil, errors.New("attempt already finished")
+	}
+
+	// Re-fetch the latest counters from the DB so we include all submitted answers.
+	// The in-memory attempt object was loaded before any answers were saved.
+	fresh, err := uc.attemptRepo.FindByID(ctx, attemptID)
+	if err != nil {
+		return nil, err
+	}
+
+	score := 0.0
+	if fresh.QuestionsTotal > 0 {
+		score = float64(fresh.QuestionsCorrect) / float64(fresh.QuestionsTotal) * 100
+	}
+
+	if err := uc.attemptRepo.Complete(ctx, attemptID, score, fresh.QuestionsCorrect, fresh.QuestionsAnswered); err != nil {
+		return nil, err
 	}
 
 	return uc.attemptRepo.FindByID(ctx, attemptID)
@@ -243,6 +256,11 @@ func (uc *ExamUseCase) GetAttemptWithDetails(ctx context.Context, attemptID uuid
 	attempt, err := uc.attemptRepo.FindByID(ctx, attemptID)
 	if err != nil {
 		return nil, ErrAttemptNotFound
+	}
+
+	exam, err := uc.examRepo.FindExamByID(ctx, attempt.ExamID)
+	if err != nil {
+		return nil, err
 	}
 
 	// Get only the questions selected for this attempt
@@ -291,8 +309,11 @@ func (uc *ExamUseCase) GetAttemptWithDetails(ctx context.Context, attemptID uuid
 	}
 
 	return &domain.AttemptWithDetails{
-		Attempt:   *attempt,
-		Questions: detailed,
+		Attempt:      *attempt,
+		ExamName:     exam.Name,
+		ExamCode:     exam.Code,
+		PassingScore: exam.PassingScore,
+		Questions:    detailed,
 	}, nil
 }
 

@@ -27,15 +27,18 @@ export function AnimatedCounter({
   const isInView = useInView(ref, { once: true, margin: "-50px" });
   const [display, setDisplay] = useState("0");
 
+  const safeValue = Number.isFinite(value) ? value : 0;
+
   useEffect(() => {
     if (isInView) {
-      motionValue.set(value);
+      motionValue.set(safeValue);
     }
-  }, [isInView, motionValue, value]);
+  }, [isInView, motionValue, safeValue]);
 
   useEffect(() => {
     const unsubscribe = springValue.on("change", (latest) => {
-      setDisplay(Math.round(latest).toLocaleString());
+      const num = Number.isFinite(latest) ? latest : 0;
+      setDisplay(Math.round(num).toLocaleString());
     });
     return unsubscribe;
   }, [springValue]);
