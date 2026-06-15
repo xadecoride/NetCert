@@ -1,198 +1,165 @@
-# NetCert 🏆
+# NetCert
 
-Бесплатная платформа для подготовки к сертификационным экзаменам **Juniper (JNCIA→JNCIE)** и **Cisco (CCNA→CCIE)**. Все материалы доступны после регистрации.
-
----
-
-## 📋 Предварительная установка
-
-Перед запуском убедись, что всё необходимое установлено:
-
-### 1. Docker + Docker Compose
-```bash
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER
-# Выйди и зайди заново (или: newgrp docker)
-docker --version
-docker compose version
-```
-
-### 2. Go 1.22+
-```bash
-wget -q https://go.dev/dl/go1.22.10.linux-amd64.tar.gz
-sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf go1.22.10.linux-amd64.tar.gz
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-source ~/.bashrc
-go version
-```
-
-### 3. PostgreSQL клиент
-```bash
-sudo apt update && sudo apt install -y postgresql-client
-psql --version
-```
-
-### 4. Node.js (уже установлен — v22.22.1)
-```bash
-node --version
-npm --version
-```
+A free, open-source platform for preparing for **Juniper (JNCIA → JNCIE)** and **Cisco (CCNA → CCIE)** certification exams. Register, pick a track, and start practicing.
 
 ---
 
-## 🚀 Полный запуск (4 шага)
+## Quick Start
 
-Выполняй в **4 терминалах** по порядку.
+Clone the repo and start the whole stack in a few commands.
 
-### Шаг 1 — База данных + Redis
+### 1. Clone the repository
+
 ```bash
-cd /home/daniil/NetCert
-docker compose -f infra/docker-compose.yml up -d postgres redis
-# Подожди 5-10 секунд
+git clone <repo-url>
+cd NetCert
 ```
 
-### Шаг 2 — Миграции БД
+### 2. Start infrastructure
+
 ```bash
-cd /home/daniil/NetCert
-psql -h localhost -U netcert -d netcert -f backend/migrations/001_initial_schema.sql
-psql -h localhost -U netcert -d netcert -f backend/migrations/002_seed_data.sql
-# Пароль: netcert
+cp backend/.env.example backend/.env
+make dev-infra
 ```
 
-### Шаг 3 — Бэкенд (Go)
+### 3. Run the app
+
+In two separate terminals:
+
 ```bash
-cd /home/daniil/NetCert/backend
-cp .env.example .env   # только при первом запуске
-go run ./cmd/server/
-# → http://localhost:8080
+make dev-backend   # http://localhost:8080
 ```
 
-### Шаг 4 — Фронтенд (Next.js)
 ```bash
-cd /home/daniil/NetCert/frontend
-npm install   # только при первом запуске
-npm run dev
-# → http://localhost:3000
+make dev-frontend  # http://localhost:3000
+```
+
+The frontend and API will be ready in a few seconds.
+
+---
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) + Docker Compose plugin
+- [Go 1.22+](https://go.dev/doc/install)
+- [Node.js 22+](https://nodejs.org/)
+- `make`
+
+---
+
+## URLs
+
+| URL | Description |
+|-----|-------------|
+| `http://localhost:3000` | Landing page |
+| `http://localhost:3000/auth/register` | Sign up |
+| `http://localhost:3000/auth/login` | Sign in |
+| `http://localhost:3000/dashboard` | Dashboard |
+| `http://localhost:3000/exams` | Exam catalog |
+| `http://localhost:8080/health` | API health check |
+
+---
+
+## Useful Commands
+
+```bash
+make dev-infra      # Start Postgres and Redis
+make migrate-up     # Apply migrations
+make dev-backend    # Run Go server on :8080
+make dev-frontend   # Run Next.js dev server on :3000
 ```
 
 ---
 
-## 🌐 Что открывать в браузере
-
-| Адрес | Описание |
-|-------|----------|
-| `http://localhost:3000` | Главная (Landing) |
-| `http://localhost:3000/auth/register` | Регистрация |
-| `http://localhost:3000/auth/login` | Вход |
-| `http://localhost:3000/dashboard` | Дашборд (после входа) |
-| `http://localhost:3000/exams` | Список экзаменов |
-| `http://localhost:3000/exam/:id` | Прохождение экзамена |
-| `http://localhost:8080/health` | Health check API |
-
----
-
-## ⚡ Через Makefile (если всё установлено)
-
-```bash
-make dev-infra     # Docker: postgres + redis
-make dev-backend   # Go сервер на :8080
-make dev-frontend  # Next.js на :3000
-make migrate-up    # Применить миграции
-```
-
----
-
-## 🏗 Архитектура
+## Project Structure
 
 ```
-netcert/
-├── backend/                    # Go-бэкенд (Clean Architecture)
-│   ├── cmd/server/main.go      # Точка входа
+NetCert/
+├── backend/                    # Go backend (Clean Architecture)
+│   ├── cmd/server/main.go      # Entry point
 │   ├── internal/
-│   │   ├── config/             # Конфигурация
-│   │   ├── domain/             # Доменные сущности
-│   │   ├── repository/postgres/ # Репозитории (PostgreSQL)
-│   │   ├── usecase/            # Бизнес-логика
+│   │   ├── config/             # Configuration
+│   │   ├── domain/             # Domain models
+│   │   ├── repository/postgres/# Repositories
+│   │   ├── usecase/            # Business logic
 │   │   ├── delivery/http/      # HTTP handlers (Chi)
-│   │   ├── middleware/         # Auth middleware (JWT)
-│   │   └── pkg/                # Утилиты (JWT, хэширование)
-│   ├── migrations/             # SQL миграции + сиды
-│   └── go.mod
-├── frontend/                   # Next.js 16 фронтенд
-│   ├── app/                    # App Router страницы
-│   │   ├── auth/               # Login / Register
-│   │   ├── dashboard/          # Дашборд пользователя
-│   │   ├── exams/              # Список экзаменов
-│   │   ├── exam/[id]/          # Прохождение экзамена
-│   │   ├── review/[id]/        # Разбор результатов
-│   │   └── settings/           # Настройки
-│   ├── components/             # UI компоненты (shadcn-стиль)
-│   └── lib/                    # API клиент, контекст, утилиты
-└── infra/                      # Docker-инфраструктура
-    ├── docker-compose.yml
-    ├── Dockerfile.backend
-    └── Dockerfile.frontend
+│   │   ├── middleware/         # JWT auth middleware
+│   │   └── pkg/                # Utilities
+│   └── migrations/             # SQL migrations and seed data
+├── frontend/                   # Next.js frontend
+│   ├── app/                    # App Router pages
+│   ├── components/             # UI components
+│   └── lib/                    # API client, context, utilities
+└── infra/                      # Docker infrastructure
+    └── docker-compose.yml
 ```
 
-## 🛠 Стек технологий
+---
 
-### Бэкенд
-- **Go 1.22+** — чистый язык, высокая производительность
-- **Chi** — легковесный HTTP-роутер
-- **pgx** — драйвер PostgreSQL
-- **JWT** — аутентификация (access + refresh токены)
-- **Clean Architecture** — domain → usecase → repository → delivery
+## Tech Stack
 
-### Фронтенд
-- **Next.js 16** — React-фреймворк с App Router
-- **React 19** + **TypeScript**
-- **Tailwind CSS 4** — утилитарный CSS
-- **shadcn/ui** — компоненты в bento-grid стиле
-- **Framer Motion** — анимации
-- **Recharts** — графики и аналитика
+**Backend**
 
-### Инфраструктура
-- **PostgreSQL 16** — основная БД
-- **Redis 7** — кэш и сессии
-- **Docker Compose** — локальная разработка
+- Go 1.22+
+- Chi router
+- pgx PostgreSQL driver
+- JWT authentication (access + refresh tokens)
+- Clean Architecture
 
-## 📚 Контент (в seed-данных)
+**Frontend**
 
-**JNCIA-Junos (JN0-101)** — 10 вопросов:
-Junos OS Architecture, CLI, OSPF, BGP, Firewall Filters, Static Routing, Interface Types, Configuration Management
+- Next.js 16 with App Router
+- React 19 + TypeScript
+- Tailwind CSS 4
+- shadcn/ui
+- Framer Motion
+- Recharts
 
-**JNCIA-SP (JN0-201)** — 3 вопроса:
-MPLS Fundamentals, Architecture, LDP
+**Infrastructure**
 
-**CCNA (200-301)** — 3 вопроса:
-OSPF AD, VLAN Ranges, RIP
+- PostgreSQL 16
+- Redis 7
+- Docker Compose
 
-## 🔌 API Endpoints
+---
 
-| Метод | Путь | Описание |
-|-------|------|----------|
+## API Overview
+
+| Method | Path | Description |
+|--------|------|-------------|
 | GET | `/health` | Health check |
-| POST | `/api/v1/auth/register` | Регистрация |
-| POST | `/api/v1/auth/login` | Вход |
-| GET | `/api/v1/users/me` | Профиль (auth) |
-| GET | `/api/v1/tracks` | Список треков |
-| GET | `/api/v1/tracks/{slug}` | Детали трека |
-| GET | `/api/v1/tracks/{slug}/exams` | Экзамены трека |
-| GET | `/api/v1/exams/{examId}` | Детали экзамена |
-| POST | `/api/v1/attempts` | Начать попытку (auth) |
-| GET | `/api/v1/attempts/{attemptId}` | Получить попытку (auth) |
-| POST | `/api/v1/attempts/{attemptId}/answers` | Отправить ответ (auth) |
-| POST | `/api/v1/attempts/{attemptId}/complete` | Завершить попытку (auth) |
-| GET | `/api/v1/attempts/history` | История попыток (auth) |
+| POST | `/api/v1/auth/register` | Register |
+| POST | `/api/v1/auth/login` | Log in |
+| GET | `/api/v1/users/me` | Current user profile |
+| GET | `/api/v1/tracks` | List certification tracks |
+| GET | `/api/v1/tracks/{slug}` | Track details |
+| GET | `/api/v1/tracks/{slug}/exams` | Exams in a track |
+| GET | `/api/v1/exams/{examId}` | Exam details |
+| POST | `/api/v1/attempts` | Start an attempt |
+| GET | `/api/v1/attempts/{attemptId}` | Get attempt |
+| POST | `/api/v1/attempts/{attemptId}/answers` | Submit answer |
+| POST | `/api/v1/attempts/{attemptId}/complete` | Complete attempt |
+| GET | `/api/v1/attempts/history` | Attempt history |
 
-## 📋 Планы развития
+---
 
-- [ ] 16 полноценных экзаменов (JNCIA→JNCIE, CCNA→CCIE)
+## Sample Content
+
+Seed data includes starter questions for:
+
+- **JNCIA-Junos (JN0-101)** — Junos OS, CLI, OSPF, BGP, firewall filters, static routing, interfaces
+- **JNCIA-SP (JN0-201)** — MPLS fundamentals, architecture, LDP
+- **CCNA (200-301)** — OSPF AD, VLAN ranges, RIP
+
+---
+
+## Roadmap
+
+- [ ] 16 full exams across JNCIA–JNCIE and CCNA–CCIE
 - [ ] JNCIE Lab Engine (Containerlab)
-- [ ] Spaced Repetition (SM-2 алгоритм)
-- [ ] Аналитика: heatmap, radar chart, predictive readiness
-- [ ] Gamification: streak, XP, achievements
-- [ ] i18n (RU/EN)
+- [ ] Spaced repetition (SM-2)
+- [ ] Analytics: heatmap, radar chart, readiness score
+- [ ] Gamification: streaks, XP, achievements
+- [ ] i18n (EN/RU)
 - [ ] OAuth2 (Google/GitHub)
-- [ ] PWA / офлайн-режим
+- [ ] PWA / offline mode
