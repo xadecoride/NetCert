@@ -115,14 +115,30 @@ def main():
             by_type[qtype] += 1
 
             # Validate options format matches question type
-            if qtype == "fill-blank":
-                # fill-blank should have exactly 1 correct option
+            if qtype == "single-choice":
                 if correct_count != 1:
-                    q_warnings.append(f"fill-blank: expected 1 correct option, got {correct_count}")
+                    q_errors.append(f"single-choice: expected exactly 1 correct option, got {correct_count}")
+            elif qtype == "fill-blank":
+                if correct_count != 1:
+                    q_errors.append(f"fill-blank: expected exactly 1 correct option, got {correct_count}")
             elif qtype == "multiple-choice":
-                # multiple-choice should have >= 2 correct options
-                if correct_count < 2:
-                    q_warnings.append(f"multiple-choice: expected >= 2 correct options, got {correct_count}")
+                if not (2 <= correct_count <= 3):
+                    q_errors.append(f"multiple-choice: expected 2-3 correct options, got {correct_count}")
+            elif qtype == "simlet":
+                if correct_count != 1:
+                    q_errors.append(f"simlet: expected exactly 1 correct option, got {correct_count}")
+            elif qtype == "drag-drop":
+                if correct_count != len(options):
+                    q_errors.append(f"drag-drop: expected all options to be correct (matching pairs), got {correct_count}/{len(options)}")
+
+            # Validate option text plausibility
+            for o in options:
+                text = str(o.get("text", "")).strip()
+                if not text:
+                    q_errors.append(f"option '{o.get('id')}' has empty text")
+                elif len(text) < 2:
+                    # Short option text may be valid for numeric answers, DNS record types, etc.
+                    q_warnings.append(f"option '{o.get('id')}' has short text '{text}'; verify it is meaningful")
 
         # 6. Difficulty check
         if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 5:

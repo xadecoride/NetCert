@@ -71,6 +71,36 @@ make dev-frontend   # Run Next.js dev server on :3000
 
 ---
 
+## Generating Question Banks
+
+Question banks are produced from blueprint-aligned content pools and written as `goose` migrations in `backend/migrations/`.
+
+Generate all supported exams:
+
+```bash
+python3 scripts/generate_quality_questions.py
+```
+
+Generate a single exam:
+
+```bash
+python3 scripts/generate_quality_questions.py ccna
+python3 scripts/generate_quality_questions.py jncia-junos
+python3 scripts/generate_quality_questions.py jncip-ent
+python3 scripts/generate_quality_questions.py jncip-sp
+```
+
+Then apply migrations:
+
+```bash
+cd backend
+make migrate-up
+```
+
+See `AGENTS.md` for detailed instructions on adding new content and validating output.
+
+---
+
 ## Project Structure
 
 ```
