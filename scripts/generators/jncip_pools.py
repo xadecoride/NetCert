@@ -462,3 +462,224 @@ JNCIP_SP_MULTIPLE_CHOICE = [
         "AS_PATH prepending and MED influence how external ASes send traffic inbound. LOCAL_PREF and Weight influence outbound.",
     ),
 ]
+
+
+JNCIP_ENT_DRAG_DROP_POOLS = [
+    (
+        "1.0 IGP",
+        "Match the OSPF LSA type to its description.",
+        [
+            ("Type 1", "Router LSA"),
+            ("Type 2", "Network LSA"),
+            ("Type 3", "Summary LSA"),
+            ("Type 5", "External LSA"),
+            ("Type 7", "NSSA External LSA"),
+        ],
+    ),
+    (
+        "2.0 BGP",
+        "Order the BGP route selection steps from highest to lowest priority.",
+        [
+            ("Weight", "Highest priority Cisco attribute"),
+            ("LOCAL_PREF", "Outbound preference"),
+            ("AS_PATH", "Prefer shorter path"),
+            ("MED", "Inbound preference"),
+        ],
+    ),
+    (
+        "4.0 Ethernet Switching",
+        "Match the spanning-tree port role to its function.",
+        [
+            ("Root port", "Best path to root"),
+            ("Designated port", "Forwards toward root on segment"),
+            ("Alternate port", "Backup root path"),
+            ("Backup port", "Backup on same segment"),
+        ],
+    ),
+    (
+        "6.0 EVPN",
+        "Match the EVPN route type to its purpose.",
+        [
+            ("Type 1", "Ethernet Auto-Discovery"),
+            ("Type 2", "MAC/IP advertisement"),
+            ("Type 3", "Inclusive multicast"),
+            ("Type 4", "Ethernet segment"),
+            ("Type 5", "IP prefix"),
+        ],
+    ),
+    (
+        "5.0 CoS",
+        "Match the CoS component to its function.",
+        [
+            ("Classifier", "Maps traffic to forwarding class"),
+            ("Rewrite rule", "Changes DSCP/CoS bits"),
+            ("Scheduler", "Defines bandwidth and priority"),
+            ("Policer", "Rate limits traffic"),
+        ],
+    ),
+]
+
+JNCIP_SP_DRAG_DROP_POOLS = [
+    (
+        "3.0 BGP",
+        "Order the BGP route selection attributes from highest to lowest priority.",
+        [
+            ("Weight", "Cisco local attribute"),
+            ("LOCAL_PREF", "Outbound path preference"),
+            ("AS_PATH", "Shorter is better"),
+            ("MED", "Inbound path preference"),
+        ],
+    ),
+    (
+        "4.0 MPLS",
+        "Match the MPLS label operation to its description.",
+        [
+            ("Push", "Add a label"),
+            ("Pop", "Remove top label"),
+            ("Swap", "Replace top label"),
+            ("PHP", "Pop at penultimate hop"),
+        ],
+    ),
+    (
+        "5.0 L3VPN",
+        "Match the VPN component to its function.",
+        [
+            ("Route distinguisher", "Makes prefixes unique"),
+            ("Route target", "Controls import/export"),
+            ("PE router", "Provider edge device"),
+            ("CE router", "Customer edge device"),
+        ],
+    ),
+    (
+        "6.0 L2VPN",
+        "Match the Layer 2 VPN technology to its topology.",
+        [
+            ("VPLS", "Multipoint"),
+            ("VPWS", "Point-to-point"),
+            ("Martini", "LDP-signaled pseudowire"),
+            ("Kompella", "BGP-signaled L2VPN"),
+        ],
+    ),
+    (
+        "7.0 Multicast",
+        "Match the PIM mode to its behavior.",
+        [
+            ("PIM-SM", "Uses rendezvous point"),
+            ("PIM-SSM", "Source-specific"),
+            ("PIM-DM", "Flood and prune"),
+        ],
+    ),
+]
+
+JNCIP_ENT_FILL_BLANK_POOLS = [
+    ("1.1 OSPF", "In OSPF, the router elected on a broadcast segment to reduce adjacency count is the __________.", "DR", ["BDR", "ABR", "ASBR", "DRother"]),
+    ("1.2 IS-IS", "An IS-IS router that prevents transit traffic by setting the __________ bit is used during maintenance.", "overload", ["attached", "metric", "level", "DIS"]),
+    ("2.2 BGP attributes", "The BGP attribute that influences outbound path selection from the local AS is __________.", "LOCAL_PREF", ["MED", "AS_PATH", "NEXT_HOP", "ORIGIN"]),
+    ("2.3 BGP scaling", "A BGP __________ reduces the need for a full iBGP mesh by reflecting routes to clients.", "route reflector", ["confederation", "peer group", "dampening", "community"]),
+    ("3.0 IP Multicast", "In PIM sparse mode, sources register with the __________.", "rendezvous point", ["RP", "BSR", "MSDP", "DR"]),
+    ("4.0 Ethernet Switching", "The Junos interface that routes for a bridge domain is called an __________.", "IRB", ["SVI", "BVI", "VLAN", "LAG"]),
+    ("5.0 CoS", "The Junos feature that maps incoming traffic to a forwarding class is a __________.", "classifier", ["scheduler", "policer", "rewrite rule", "drop profile"]),
+    ("6.0 EVPN", "The EVPN route type used to advertise MAC/IP reachability is Type __________.", "2", ["1", "3", "4", "5"]),
+    ("7.0 Layer 3 VPN", "The BGP extended community that controls VPN route import/export is the __________.", "route target", ["route distinguisher", "site of origin", "cluster list", "originator ID"]),
+    ("8.0 Layer 2 VPN", "A point-to-point Layer 2 MPLS service is called __________.", "VPWS", ["VPLS", "EVPN", "L3VPN", "PWE3"]),
+    ("9.0 High Availability", "The feature that allows the backup Routing Engine to take over forwarding state without interruption is __________.", "GRES", ["NSR", "NSF", "BFD", "VRRP"]),
+]
+
+JNCIP_SP_FILL_BLANK_POOLS = [
+    ("1.0 OSPF", "An OSPF __________ link connects a non-backbone area to Area 0.", "virtual", ["sham", "gre", "backdoor", "logical"]),
+    ("2.0 IS-IS", "IS-IS Level __________ routers route between areas.", "2", ["1", "3", "0", "4"]),
+    ("3.0 BGP", "The BGP attribute that lists autonomous systems traversed is the __________.", "AS_PATH", ["LOCAL_PREF", "MED", "NEXT_HOP", "COMMUNITY"]),
+    ("4.0 MPLS", "The label distribution protocol that uses downstream-on-demand by default is __________.", "RSVP", ["LDP", "BGP", "OSPF", "IS-IS"]),
+    ("4.0 MPLS", "Removing the label one hop before the egress LER is called __________.", "PHP", ["FRR", "LDP", "TE", "LSP"]),
+    ("5.0 L3VPN", "The value that makes VPN-IPv4 prefixes unique is the __________.", "route distinguisher", ["route target", "VRF", "RD", "AS number"]),
+    ("6.0 L2VPN", "A multipoint Layer 2 MPLS service is called __________.", "VPLS", ["VPWS", "L2TP", "GRE", "IPsec"]),
+    ("7.0 Multicast", "PIM __________ mode does not use a rendezvous point.", "SSM", ["SM", "DM", "BIDIR", "ASM"]),
+    ("8.0 CoS", "A Junos __________ limits traffic to a configured rate.", "policer", ["scheduler", "shaper", "classifier", "queue"]),
+]
+
+JNCIP_ENT_SIMLETS += [
+    (
+        """user@PE> show isis adjacency
+Interface             System                L State        Hold (secs) SNPA
+ge-0/0/0.0            R2                    2  Up                   24
+ge-0/0/0.0            R3                    1  Up                   22
+ge-0/0/1.0            R4                    2  Up                   20""",
+        "How many Level 1 IS-IS adjacencies are present?",
+        [("0", False), ("1", True), ("2", False), ("3", False)],
+        "Only one adjacency shows Level 1 (L 1).",
+        "1.2 IS-IS",
+    ),
+    (
+        """user@PE> show configuration interfaces irb
+unit 10 {
+    family inet {
+        address 10.10.10.1/24;
+    }
+}
+unit 20 {
+    family inet {
+        address 10.20.20.1/24;
+    }
+}""",
+        "How many IRB interfaces are configured?",
+        [("1", False), ("2", True), ("3", False), ("0", False)],
+        "IRB units 10 and 20 are configured.",
+        "4.0 Ethernet Switching",
+    ),
+    (
+        """user@PE> show configuration policy-options community VPN-CUSTOMERS
+members target:65000:100;
+
+user@PE> show configuration routing-instances VPN-A
+instance-type vrf;
+interface ge-0/0/2.0;
+route-distinguisher 65000:1;
+vrf-target target:65000:100;""",
+        "Which route target is imported/exported by VPN-A?",
+        [("65000:1", False), ("65000:100", True), ("target:65000:1", False), ("No RT configured", False)],
+        "vrf-target target:65000:100 controls import/export.",
+        "7.0 Layer 3 VPN",
+    ),
+]
+
+JNCIP_SP_SIMLETS += [
+    (
+        """user@P> show rsvp session
+Ingress RSVP: 1 sessions
+To              From            State Rt Style Labelin Labelout LSPname
+10.0.0.7        10.0.0.1        Up    0  1 SE  -       299808   to-PE3
+Total 1 displayed, Up 1, Down 0""",
+        "What is the outgoing label for the LSP to-PE3?",
+        [("299808", True), ("10.0.0.7", False), ("10.0.0.1", False), ("No label", False)],
+        "The Labelout column shows 299808.",
+        "4.0 MPLS",
+    ),
+    (
+        """user@PE> show l2vpn connections
+Layer-2 VPN connections:
+
+Legend for connection status (St)
+EI -- encapsulation invalid      NC -- interface encapsulation not CCC/TCC/VPLS
+EM -- encapsulation mismatch     WE -- interface and instance encaps not same
+VC-Dn -- Virtual circuit down    NP -- hardware interface not present
+
+Connection name             Site       St                  ID last up
+ge-0/0/2.0                  1          DN                  --""",
+        "What is the status of the L2VPN connection?",
+        [("Up", False), ("Down", True), ("Partial", False), ("Unknown", False)],
+        "The St column shows DN, which means down.",
+        "6.0 L2VPN",
+    ),
+    (
+        """user@PE> show multicast route
+Family: INET
+
+Group           Source          RP              Flags
+239.1.1.1       10.0.0.10       10.0.0.5        SPT
+239.2.2.2       *               10.0.0.5        RPT""",
+        "Which group is using the shortest-path tree?",
+        [("239.1.1.1", True), ("239.2.2.2", False), ("Both", False), ("Neither", False)],
+        "The Flags column shows SPT for 239.1.1.1.",
+        "7.0 Multicast",
+    ),
+]

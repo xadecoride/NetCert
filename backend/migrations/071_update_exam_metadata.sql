@@ -5,15 +5,13 @@
 -- Migration 071: Align exam metadata with real certification codes
 -- ============================================================
 
--- Update Cisco CCNA metadata to match real 200-301 exam
+-- Update Cisco CCNA metadata
 UPDATE exams
-SET code = '200-301',
-    name = 'CCNA (200-301) Implementing and Administering Cisco Solutions',
-    duration_minutes = 120,
+SET duration_minutes = 120,
     total_questions = 100,
     passing_score = 82.5,
     blueprint_url = 'https://learningcontent.cisco.com/documents/marketing/exam-topics/200-301-CCNA-v1.1.pdf'
-WHERE code = 'CCNA-200-301';
+WHERE id = 'b0000000-0000-0000-0000-000000000003';
 
 -- Update Juniper JNCIA-Junos to real JN0-106
 UPDATE exams
@@ -130,7 +128,7 @@ WHERE slug = 'cisco';
 -- +goose StatementBegin
 
 -- Restore previous metadata
-UPDATE exams SET code = 'CCNA-200-301', name = 'CCNA (200-301)', duration_minutes = 120, total_questions = 102, passing_score = 70.0, blueprint_url = NULL WHERE code = '200-301';
+UPDATE exams SET duration_minutes = 120, total_questions = 102, passing_score = 70.0, blueprint_url = NULL WHERE id = 'b0000000-0000-0000-0000-000000000003';
 UPDATE exams SET code = 'JNCIA-Junos-ENT', name = 'JNCIA-Junos (Enterprise Routing)', duration_minutes = 90, total_questions = 60, passing_score = 60.0, blueprint_url = NULL WHERE code = 'JN0-106';
 UPDATE exams SET code = 'JNCIA-Junos-SP', name = 'JNCIA-Junos (Service Provider)', duration_minutes = 90, total_questions = 60, passing_score = 60.0 WHERE code = 'JN0-201';
 UPDATE exams SET code = 'JNCSA-Junos', name = 'JNCSA-Junos (Security)', duration_minutes = 90, total_questions = 60, passing_score = 60.0 WHERE code = 'JN0-230';

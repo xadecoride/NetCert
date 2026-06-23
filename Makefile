@@ -1,4 +1,4 @@
-.PHONY: dev-backend dev-frontend dev-infra build-backend build-frontend build-all test-backend migrate-up migrate-down clean
+.PHONY: dev-backend dev-frontend dev-infra build-backend build-frontend build-all test-backend migrate-up migrate-down up down clean
 
 # Development
 dev-infra:
@@ -14,6 +14,13 @@ dev-all: dev-infra
 	@echo "Starting backend and frontend..."
 	@cd backend && go run ./cmd/server/ &
 	@cd frontend && npm run dev
+
+# Full stack via Docker Compose
+up:
+	docker compose -f infra/docker-compose.yml up --build -d
+
+down:
+	docker compose -f infra/docker-compose.yml down
 
 # Build
 build-backend:

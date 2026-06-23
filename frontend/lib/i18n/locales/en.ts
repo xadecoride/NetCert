@@ -79,8 +79,6 @@ export const en = {
   auth: {
     welcomeBack: "Welcome back",
     signInSubtitle: "Sign in to continue your certification journey",
-    devMode: "DEV MODE — bypass password",
-    devLogin: "Dev Login (no password)",
     email: "Email",
     emailPlaceholder: "you@example.com",
     password: "Password",

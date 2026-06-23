@@ -80,14 +80,6 @@ export const authApi = {
       expires_in: number;
     }>("/auth/login", { method: "POST", body: data }),
 
-  devLogin: (data: { email: string }) =>
-    request<{
-      user: any;
-      access_token: string;
-      refresh_token: string;
-      expires_in: number;
-    }>("/auth/dev-login", { method: "POST", body: data }),
-
   getProfile: () => request<any>("/users/me"),
 
   updateProfile: (data: { display_name?: string; avatar_url?: string | null }) =>

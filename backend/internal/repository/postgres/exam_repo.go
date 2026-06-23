@@ -138,6 +138,25 @@ func (r *ExamRepository) ListQuestionIDs(ctx context.Context, examID uuid.UUID) 
 	return ids, nil
 }
 
+// ListQuestionIDsByType returns active question IDs filtered by question_type.
+func (r *ExamRepository) ListQuestionIDsByType(ctx context.Context, examID uuid.UUID, questionType string) ([]uuid.UUID, error) {
+	rows, err := r.pool.Query(ctx, `SELECT id FROM questions WHERE exam_id = $1 AND question_type = $2 AND is_active = true`, examID, questionType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ids []uuid.UUID
+	for rows.Next() {
+		var id uuid.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 // GetQuestionsByIDs fetches questions by their IDs preserving input order
 // Returns error if any ID is not found (prevents silent data loss)
 func (r *ExamRepository) GetQuestionsByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {

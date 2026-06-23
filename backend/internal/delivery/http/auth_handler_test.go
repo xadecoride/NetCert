@@ -174,42 +174,6 @@ func TestAuthHandler_Login_InvalidCredentials(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 }
 
-func TestAuthHandler_DevLogin(t *testing.T) {
-	pool, err := pgxmock.NewPool()
-	require.NoError(t, err)
-	defer pool.Close()
-
-	jwtMgr := testJWTManager()
-
-	// For dev login, first FindByEmail returns not found, then Create
-	pool.ExpectQuery(`SELECT .+ FROM users WHERE email`).
-		WithArgs("dev@netcert.local").
-		WillReturnError(errors.New("not found"))
-
-	pool.ExpectExec(`INSERT INTO users`).
-		WithArgs(pgxmock.AnyArg(), "dev@netcert.local", "", "Dev User",
-			domain.RoleStudent, true, 0, int64(0), pgxmock.AnyArg(), pgxmock.AnyArg()).
-		WillReturnResult(pgxmock.NewResult("INSERT", 1))
-
-	userRepo := postgres.NewUserRepository(pool)
-	authUC := usecase.NewAuthUseCase(userRepo, jwtMgr)
-	handler := NewAuthHandler(authUC)
-
-	body := `{"email":"dev@netcert.local"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/dev-login", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-
-	handler.DevLogin(w, req)
-
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	var resp domain.AuthResponse
-	err = json.NewDecoder(w.Body).Decode(&resp)
-	require.NoError(t, err)
-	assert.NotEmpty(t, resp.AccessToken)
-}
-
 // hashPasswordForHandlerTest hashes a password for handler tests using bcrypt
 func hashPasswordForHandlerTest(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)

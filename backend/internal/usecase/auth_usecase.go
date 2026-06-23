@@ -102,47 +102,6 @@ func (uc *AuthUseCase) Login(ctx context.Context, req domain.LoginRequest) (*dom
 	}, nil
 }
 
-func (uc *AuthUseCase) DevLogin(ctx context.Context, email string) (*domain.AuthResponse, error) {
-	// Try to find existing user
-	user, err := uc.userRepo.FindByEmail(ctx, email)
-	if err != nil {
-		// Create new dev user
-		now := time.Now()
-		user = &domain.User{
-			ID:              uuid.New(),
-			Email:           email,
-			PasswordHash:    "",
-			DisplayName:     "Dev User",
-			Role:            domain.RoleStudent,
-			IsEmailVerified: true,
-			StreakDays:      0,
-			TotalXP:         0,
-			CreatedAt:       now,
-			UpdatedAt:       now,
-		}
-		if err := uc.userRepo.Create(ctx, user); err != nil {
-			return nil, err
-		}
-	}
-
-	accessToken, err := uc.jwtManager.GenerateAccessToken(user.ID, user.Email, string(user.Role))
-	if err != nil {
-		return nil, err
-	}
-
-	refreshToken, err := uc.jwtManager.GenerateRefreshToken(user.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domain.AuthResponse{
-		User:         *user,
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int(uc.jwtManager.AccessTokenTTL().Seconds()),
-	}, nil
-}
-
 func (uc *AuthUseCase) GetProfile(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
 	user, err := uc.userRepo.FindByID(ctx, userID)
 	if err != nil {

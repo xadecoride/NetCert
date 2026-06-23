@@ -13,11 +13,8 @@ import {
   SignIn,
   Eye,
   EyeSlash,
-  Bug,
   ArrowRight,
 } from "@phosphor-icons/react";
-
-const isDev = process.env.NODE_ENV === "development";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -26,7 +23,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-  const { login, devLogin } = useAuth();
+  const { login } = useAuth();
   const { t } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,19 +35,6 @@ export default function LoginPage() {
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDevLogin = async () => {
-    setError("");
-    setLoading(true);
-    try {
-      await devLogin(email || undefined);
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Dev login failed");
     } finally {
       setLoading(false);
     }
@@ -121,25 +105,6 @@ export default function LoginPage() {
                 {t("auth.signInSubtitle")}
               </p>
             </div>
-
-            {isDev && (
-              <div className="p-3 rounded-xl border border-amber-300/30 bg-amber-50/50 dark:bg-amber-900/10 dark:border-amber-700/30 mb-6">
-                <p className="text-xs text-amber-600 dark:text-amber-400 mb-2 font-medium">
-                  {t("auth.devMode")}
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full border-amber-300/50 text-amber-600 hover:bg-amber-100 dark:border-amber-700/30 dark:text-amber-400 dark:hover:bg-amber-900/20"
-                  onClick={handleDevLogin}
-                  loading={loading}
-                >
-                  <Bug className="h-4 w-4 mr-2" weight="regular" />
-                  {t("auth.devLogin")}
-                </Button>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (

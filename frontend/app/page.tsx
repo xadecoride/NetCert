@@ -115,23 +115,28 @@ const features = [
 const stats = [
   { value: 9150, suffix: "+", labelKey: "statsQuestions", icon: BookOpen },
   { value: 10, suffix: "+", labelKey: "statsLabs", icon: ComputerTower },
-  { value: 5, suffix: "", labelKey: "statsTracks", icon: Network },
+  { value: 7, suffix: "", labelKey: "statsTracks", icon: Network },
   { value: 1200, suffix: "+", labelKey: "statsUsers", icon: Users },
 ];
 
 const certifications = [
   "JNCIA-Junos",
+  "JNCIS-ENT",
   "JNCIP-ENT",
   "JNCIE-ENT",
-  "CCNA",
+  "CCNA 2.0",
   "CCNP",
   "CCIE",
   "JNCIA-Cloud",
+  "JNCIS-SP",
   "JNCIP-SP",
   "JNCIE-SP",
   "CCNP Enterprise",
   "CCIE Enterprise",
+  "JNCIS-SEC",
   "JNCIP-SEC",
+  "JNCIS-DC",
+  "JNCIS-AUT",
 ];
 
 const containerVariants = {

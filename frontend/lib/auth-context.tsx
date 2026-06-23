@@ -28,7 +28,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  devLogin: (email?: string) => Promise<void>;
   register: (email: string, password: string, displayName: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -71,13 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(response.user);
   };
 
-  const devLogin = async (email?: string) => {
-    const response = await authApi.devLogin({ email: email || "dev@netcert.local" });
-    localStorage.setItem("access_token", response.access_token);
-    localStorage.setItem("refresh_token", response.refresh_token);
-    setUser(response.user);
-  };
-
   const register = async (email: string, password: string, displayName: string) => {
     const response = await authApi.register({ email, password, display_name: displayName });
     localStorage.setItem("access_token", response.access_token);
@@ -103,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, devLogin, register, logout, isAuthenticated: !!user, updateProfile, updatePreferences }}
+      value={{ user, loading, login, register, logout, isAuthenticated: !!user, updateProfile, updatePreferences }}
     >
       {children}
     </AuthContext.Provider>

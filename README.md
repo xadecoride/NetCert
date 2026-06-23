@@ -15,16 +15,30 @@ git clone <repo-url>
 cd NetCert
 ```
 
-### 2. Start infrastructure
+### 2. Start everything with Docker Compose (recommended)
 
 ```bash
 cp backend/.env.example backend/.env
+make up
+```
+
+This builds and starts PostgreSQL, Redis, backend, and frontend in one command. Migrations are applied automatically before the backend starts.
+
+Stop the stack:
+
+```bash
+make down
+```
+
+### Alternative: run services separately
+
+Start infrastructure:
+
+```bash
 make dev-infra
 ```
 
-### 3. Run the app
-
-In two separate terminals:
+Then in two separate terminals:
 
 ```bash
 make dev-backend   # http://localhost:8080
@@ -33,8 +47,6 @@ make dev-backend   # http://localhost:8080
 ```bash
 make dev-frontend  # http://localhost:3000
 ```
-
-The frontend and API will be ready in a few seconds.
 
 ---
 

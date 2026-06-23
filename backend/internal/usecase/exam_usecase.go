@@ -85,14 +85,60 @@ func (uc *ExamUseCase) StartAttempt(ctx context.Context, userID uuid.UUID, req d
 		targetCount = len(allIDs)
 	}
 
-	// Randomly select targetCount questions from the bank
+	// Enforce a minimum number of topology/diagram questions per exam type.
+	minTopology := minTopologyQuestions(exam.Code)
+
+	// Fetch topology question IDs separately so we can guarantee the minimum.
+	var topologyIDs []uuid.UUID
+	if minTopology > 0 {
+		topologyIDs, err = uc.examRepo.ListQuestionIDsByType(ctx, req.ExamID, string(domain.QuestionTypeTopology))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	otherIDs := make([]uuid.UUID, 0, len(allIDs))
+	if len(topologyIDs) > 0 {
+		topologySet := make(map[uuid.UUID]struct{}, len(topologyIDs))
+		for _, id := range topologyIDs {
+			topologySet[id] = struct{}{}
+		}
+		for _, id := range allIDs {
+			if _, ok := topologySet[id]; !ok {
+				otherIDs = append(otherIDs, id)
+			}
+		}
+	} else {
+		otherIDs = allIDs
+	}
+
+	// Randomly select the required topology count, then fill the rest with other questions.
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	selected := make([]uuid.UUID, len(allIDs))
-	copy(selected, allIDs)
+
+	topologyCount := minTopology
+	if topologyCount > len(topologyIDs) {
+		topologyCount = len(topologyIDs)
+	}
+	if topologyCount > targetCount {
+		topologyCount = targetCount
+	}
+
+	otherCount := targetCount - topologyCount
+	if otherCount > len(otherIDs) {
+		otherCount = len(otherIDs)
+		// If there are not enough other questions, use any remaining topology questions.
+		topologyCount = targetCount - otherCount
+		if topologyCount > len(topologyIDs) {
+			topologyCount = len(topologyIDs)
+		}
+	}
+
+	selected := make([]uuid.UUID, 0, targetCount)
+	selected = append(selected, sampleIDs(rng, topologyIDs, topologyCount)...)
+	selected = append(selected, sampleIDs(rng, otherIDs, otherCount)...)
 	rng.Shuffle(len(selected), func(i, j int) {
 		selected[i], selected[j] = selected[j], selected[i]
 	})
-	selected = selected[:targetCount]
 
 	now := time.Now()
 	attempt := &domain.Attempt{
@@ -119,6 +165,41 @@ func (uc *ExamUseCase) StartAttempt(ctx context.Context, userID uuid.UUID, req d
 	}
 
 	return attempt, nil
+}
+
+// minTopologyQuestions returns the minimum number of diagram/topology questions
+// that must appear in each attempt for the given exam code.
+func minTopologyQuestions(code string) int {
+	upper := strings.ToUpper(code)
+	switch {
+	case strings.HasPrefix(upper, "CCNA"):
+		return 15
+	case strings.HasPrefix(upper, "JN"):
+		return 5
+	default:
+		return 0
+	}
+}
+
+// sampleIDs returns a random subset of up to n IDs from ids.
+func sampleIDs(rng *rand.Rand, ids []uuid.UUID, n int) []uuid.UUID {
+	if n <= 0 {
+		return nil
+	}
+	if n >= len(ids) {
+		result := make([]uuid.UUID, len(ids))
+		copy(result, ids)
+		rng.Shuffle(len(result), func(i, j int) {
+			result[i], result[j] = result[j], result[i]
+		})
+		return result
+	}
+	shuffled := make([]uuid.UUID, len(ids))
+	copy(shuffled, ids)
+	rng.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled[:n]
 }
 
 func (uc *ExamUseCase) GetAttempt(ctx context.Context, attemptID uuid.UUID) (*domain.Attempt, error) {

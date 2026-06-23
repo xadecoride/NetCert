@@ -22,7 +22,6 @@ func NewRouter(
 	quickLabUC *usecase.QuickLabUseCase,
 	studyProgressUC *usecase.StudyProgressUseCase,
 	jwtManager *jwtpkg.JWTManager,
-	appEnv string,
 ) http.Handler {
 	r := chi.NewRouter()
 
@@ -77,9 +76,6 @@ func NewRouter(
 		// Auth routes
 		r.Post("/auth/register", NewAuthHandler(authUC).Register)
 		r.Post("/auth/login", NewAuthHandler(authUC).Login)
-		if appEnv == "development" {
-			r.Post("/auth/dev-login", NewAuthHandler(authUC).DevLogin)
-		}
 
 		// Protected routes
 		r.Group(func(r chi.Router) {

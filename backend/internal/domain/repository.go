@@ -25,6 +25,7 @@ type ExamRepository interface {
 	FindExamByID(ctx context.Context, id uuid.UUID) (*Exam, error)
 	ListQuestions(ctx context.Context, examID uuid.UUID) ([]Question, error)
 	ListQuestionIDs(ctx context.Context, examID uuid.UUID) ([]uuid.UUID, error)
+	ListQuestionIDsByType(ctx context.Context, examID uuid.UUID, questionType string) ([]uuid.UUID, error)
 	GetQuestionsByIDs(ctx context.Context, ids []uuid.UUID) ([]Question, error)
 	FindQuestionByID(ctx context.Context, id uuid.UUID) (*Question, error)
 }

@@ -25,11 +25,11 @@ def main():
             filename = "078_jncia_junos_quality_questions.sql"
         elif slug == "jncip-ent":
             print("Generating JNCIP-ENT questions...", file=sys.stderr)
-            questions = generate_jncip_ent(total=250, seed=42)
+            questions = generate_jncip_ent(total=200, seed=42)
             filename = "079_jncip_ent_quality_questions.sql"
         elif slug == "jncip-sp":
             print("Generating JNCIP-SP questions...", file=sys.stderr)
-            questions = generate_jncip_sp(total=200, seed=42)
+            questions = generate_jncip_sp(total=180, seed=42)
             filename = "080_jncip_sp_quality_questions.sql"
         else:
             print(f"Unknown exam slug: {slug}", file=sys.stderr)

@@ -14,6 +14,7 @@ const (
 	QuestionTypeDragDrop       QuestionType = "drag-drop"
 	QuestionTypeFillBlank      QuestionType = "fill-blank"
 	QuestionTypeSimlet         QuestionType = "simlet"
+	QuestionTypeTopology       QuestionType = "topology"
 )
 
 type BloomLevel string

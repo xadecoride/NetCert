@@ -65,6 +65,17 @@ func (m *mockExamRepository) ListQuestionIDs(ctx context.Context, examID uuid.UU
 	return m.questionIDs[examID], nil
 }
 
+func (m *mockExamRepository) ListQuestionIDsByType(ctx context.Context, examID uuid.UUID, questionType string) ([]uuid.UUID, error) {
+	var result []uuid.UUID
+	qt := domain.QuestionType(questionType)
+	for _, q := range m.questions[examID] {
+		if q.QuestionType == qt {
+			result = append(result, q.ID)
+		}
+	}
+	return result, nil
+}
+
 func (m *mockExamRepository) GetQuestionsByIDs(ctx context.Context, ids []uuid.UUID) ([]domain.Question, error) {
 	var result []domain.Question
 	for _, examQs := range m.questions {
@@ -92,14 +103,16 @@ func (m *mockExamRepository) FindQuestionByID(ctx context.Context, id uuid.UUID)
 
 // mockAttemptRepository is a test double for domain.AttemptRepository.
 type mockAttemptRepository struct {
-	attempts map[uuid.UUID]*domain.Attempt
-	answers  map[uuid.UUID][]domain.AttemptAnswer
+	attempts  map[uuid.UUID]*domain.Attempt
+	answers   map[uuid.UUID][]domain.AttemptAnswer
+	questions map[uuid.UUID][]uuid.UUID
 }
 
 func newMockAttemptRepository() *mockAttemptRepository {
 	return &mockAttemptRepository{
-		attempts: make(map[uuid.UUID]*domain.Attempt),
-		answers:  make(map[uuid.UUID][]domain.AttemptAnswer),
+		attempts:  make(map[uuid.UUID]*domain.Attempt),
+		answers:   make(map[uuid.UUID][]domain.AttemptAnswer),
+		questions: make(map[uuid.UUID][]uuid.UUID),
 	}
 }
 
@@ -160,11 +173,12 @@ func (m *mockAttemptRepository) GetAnswers(ctx context.Context, attemptID uuid.U
 }
 
 func (m *mockAttemptRepository) SaveAttemptQuestions(ctx context.Context, attemptID uuid.UUID, questionIDs []uuid.UUID) error {
+	m.questions[attemptID] = questionIDs
 	return nil
 }
 
 func (m *mockAttemptRepository) GetAttemptQuestionIDs(ctx context.Context, attemptID uuid.UUID) ([]uuid.UUID, error) {
-	return nil, nil
+	return m.questions[attemptID], nil
 }
 
 func (m *mockAttemptRepository) IsQuestionInAttempt(ctx context.Context, attemptID, questionID uuid.UUID) (bool, error) {
@@ -227,6 +241,147 @@ func TestExamUseCase_StartAttempt(t *testing.T) {
 	assert.Equal(t, userID, attempt.UserID)
 	assert.Equal(t, examID, attempt.ExamID)
 	assert.Equal(t, len(qIDs), attempt.QuestionsTotal)
+}
+
+func TestExamUseCase_StartAttempt_EnforcesTopologyMinimum(t *testing.T) {
+	examRepo := newMockExamRepository()
+	attemptRepo := newMockAttemptRepository()
+	uc := NewExamUseCase(examRepo, attemptRepo)
+
+	ctx := context.Background()
+	userID := uuid.New()
+	examID := uuid.New()
+
+	examRepo.exams[examID] = &domain.Exam{
+		ID:              examID,
+		TrackID:         uuid.New(),
+		Code:            "CCNA-2.0",
+		Name:            "CCNA 2.0",
+		Level:           domain.LevelCCNA,
+		DurationMinutes: 120,
+		TotalQuestions:  100,
+		PassingScore:    82.5,
+		IsActive:        true,
+	}
+
+	// Create 20 topology and 100 regular questions
+	var topologyIDs, otherIDs []uuid.UUID
+	for i := 0; i < 20; i++ {
+		id := uuid.New()
+		topologyIDs = append(topologyIDs, id)
+		examRepo.questions[examID] = append(examRepo.questions[examID], domain.Question{
+			ID:           id,
+			ExamID:       examID,
+			QuestionType: domain.QuestionTypeTopology,
+			Body:         "Topology question",
+			Options:      []domain.QuestionOption{{ID: "a", Text: "A", IsCorrect: true}},
+			Difficulty:   2,
+		})
+	}
+	for i := 0; i < 100; i++ {
+		id := uuid.New()
+		otherIDs = append(otherIDs, id)
+		examRepo.questions[examID] = append(examRepo.questions[examID], domain.Question{
+			ID:           id,
+			ExamID:       examID,
+			QuestionType: domain.QuestionTypeSingleChoice,
+			Body:         "Regular question",
+			Options:      []domain.QuestionOption{{ID: "a", Text: "A", IsCorrect: true}},
+			Difficulty:   2,
+		})
+	}
+	examRepo.questionIDs[examID] = append(topologyIDs, otherIDs...)
+
+	attempt, err := uc.StartAttempt(ctx, userID, domain.StartAttemptRequest{
+		ExamID: examID,
+		Mode:   "exam",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 100, attempt.QuestionsTotal)
+
+	selectedIDs, err := attemptRepo.GetAttemptQuestionIDs(ctx, attempt.ID)
+	require.NoError(t, err)
+
+	topologyCount := 0
+	for _, id := range selectedIDs {
+		for _, tid := range topologyIDs {
+			if id == tid {
+				topologyCount++
+				break
+			}
+		}
+	}
+	assert.GreaterOrEqual(t, topologyCount, 15, "expected at least 15 topology questions in CCNA attempt")
+}
+
+func TestExamUseCase_StartAttempt_JuniperTopologyMinimum(t *testing.T) {
+	examRepo := newMockExamRepository()
+	attemptRepo := newMockAttemptRepository()
+	uc := NewExamUseCase(examRepo, attemptRepo)
+
+	ctx := context.Background()
+	userID := uuid.New()
+	examID := uuid.New()
+
+	examRepo.exams[examID] = &domain.Exam{
+		ID:              examID,
+		TrackID:         uuid.New(),
+		Code:            "JN0-106",
+		Name:            "JNCIA-Junos",
+		Level:           domain.LevelJNCIA,
+		DurationMinutes: 90,
+		TotalQuestions:  65,
+		PassingScore:    60,
+		IsActive:        true,
+	}
+
+	var topologyIDs, otherIDs []uuid.UUID
+	for i := 0; i < 7; i++ {
+		id := uuid.New()
+		topologyIDs = append(topologyIDs, id)
+		examRepo.questions[examID] = append(examRepo.questions[examID], domain.Question{
+			ID:           id,
+			ExamID:       examID,
+			QuestionType: domain.QuestionTypeTopology,
+			Body:         "Topology question",
+			Options:      []domain.QuestionOption{{ID: "a", Text: "A", IsCorrect: true}},
+			Difficulty:   2,
+		})
+	}
+	for i := 0; i < 60; i++ {
+		id := uuid.New()
+		otherIDs = append(otherIDs, id)
+		examRepo.questions[examID] = append(examRepo.questions[examID], domain.Question{
+			ID:           id,
+			ExamID:       examID,
+			QuestionType: domain.QuestionTypeSingleChoice,
+			Body:         "Regular question",
+			Options:      []domain.QuestionOption{{ID: "a", Text: "A", IsCorrect: true}},
+			Difficulty:   2,
+		})
+	}
+	examRepo.questionIDs[examID] = append(topologyIDs, otherIDs...)
+
+	attempt, err := uc.StartAttempt(ctx, userID, domain.StartAttemptRequest{
+		ExamID: examID,
+		Mode:   "exam",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 65, attempt.QuestionsTotal)
+
+	selectedIDs, err := attemptRepo.GetAttemptQuestionIDs(ctx, attempt.ID)
+	require.NoError(t, err)
+
+	topologyCount := 0
+	for _, id := range selectedIDs {
+		for _, tid := range topologyIDs {
+			if id == tid {
+				topologyCount++
+				break
+			}
+		}
+	}
+	assert.GreaterOrEqual(t, topologyCount, 5, "expected at least 5 topology questions in Juniper attempt")
 }
 
 func TestExamUseCase_SubmitAnswer(t *testing.T) {

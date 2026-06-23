@@ -1,4 +1,5 @@
-"""CCNA question generators using content pools."""
+"""CCNA 2.0 question generators using content pools."""
+import ipaddress
 import random
 
 from .common import (
@@ -14,20 +15,17 @@ from .common import (
     unique_questions,
 )
 from .ccna_pools import (
-    CCNA_CABLES,
     CCNA_CATEGORIES,
     CCNA_COMMANDS,
     CCNA_COMPARISONS,
-    CCNA_DEVICES,
     CCNA_DRAG_DROP_POOLS,
     CCNA_FILL_BLANK_POOLS,
     CCNA_MULTIPLE_CHOICE_POOLS,
-    CCNA_PROTOCOLS,
     CCNA_SCENARIOS,
     CCNA_SECTIONS,
     CCNA_SIMLETS,
+    CCNA_SUBNETTING_POOLS,
     CCNA_TERMS,
-    CCNA_WIRELESS,
 )
 
 
@@ -83,7 +81,7 @@ def gen_ccna_terms_definition(rng: random.Random, count: int) -> list[Question]:
     attempts = 0
     templates = [
         "What is {term}?",
-        "What does {term} represent in networking?",
+        "What does {term} represent?",
         "Which statement best describes {term}?",
     ]
     while len(out) < count and attempts < count * 10:
@@ -109,7 +107,7 @@ def gen_ccna_terms_definition(rng: random.Random, count: int) -> list[Question]:
     return out
 
 
-def gen_ccna_commands_single(rng: random.Random, count: int) -> list[Question]:
+def gen_ccna_commands(rng: random.Random, count: int) -> list[Question]:
     out = []
     pool = list(CCNA_COMMANDS)
     seen_bodies = set()
@@ -118,55 +116,43 @@ def gen_ccna_commands_single(rng: random.Random, count: int) -> list[Question]:
         attempts += 1
         cmd, desc, section_key = rng.choice(pool)
         section, weight = _section_meta(section_key)
-        body = f"What does the command '{cmd}' do?"
+        if rng.random() < 0.5:
+            body = f"What does the Cisco IOS command '{cmd}' do?"
+            correct = desc.capitalize()
+            wrong_pool = [d for _, d, _ in pool if d != desc]
+        else:
+            body = f"Which command {desc}?"
+            correct = cmd
+            wrong_pool = [c for c, _, _ in pool if c != cmd]
         if body in seen_bodies:
             continue
         seen_bodies.add(body)
-        correct = desc.capitalize()
-        wrong_pool = [d for _, d, _ in pool if d != desc]
-        wrongs = pick_n(wrong_pool, rng, 3, exclude=desc)
-        options = [(correct, True)] + [(w.capitalize(), False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        out.append(make_single_choice(
-            EXAMS["ccna"], body, options,
-            f"'{cmd}' {desc}.", section, weight, 2, "understand"
-        ))
-    return out
-
-
-def gen_ccna_commands_which(rng: random.Random, count: int) -> list[Question]:
-    out = []
-    pool = list(CCNA_COMMANDS)
-    seen_bodies = set()
-    attempts = 0
-    while len(out) < count and attempts < count * 10:
-        attempts += 1
-        cmd, desc, section_key = rng.choice(pool)
-        section, weight = _section_meta(section_key)
-        body = f"Which command {desc}?"
-        if body in seen_bodies:
-            continue
-        seen_bodies.add(body)
-        correct = cmd
-        wrong_pool = [c for c, _, _ in pool if c != cmd]
-        wrongs = pick_n(wrong_pool, rng, 3, exclude=cmd)
+        wrongs = pick_n(wrong_pool, rng, 3, exclude=correct)
         options = [(correct, True)] + [(w, False) for w in wrongs]
         options, _ = shuffle_options(options, rng)
         out.append(make_single_choice(
             EXAMS["ccna"], body, options,
-            f"'{cmd}' {desc}.", section, weight, 2, "apply"
+            f"'{cmd}' {desc}.", section, weight, 3, "understand"
         ))
     return out
 
 
-def gen_ccna_comparisons_single(rng: random.Random, count: int) -> list[Question]:
+def gen_ccna_comparisons(rng: random.Random, count: int) -> list[Question]:
     out = []
     pool = list(CCNA_COMPARISONS)
     seen_bodies = set()
     attempts = 0
     while len(out) < count and attempts < count * 10:
         attempts += 1
-        a, b, diff, section_key = rng.choice(pool)
+        a, b, diff = rng.choice(pool)
+        section_key = rng.choice([
+            "1.1 Cable/interface diagnostics",
+            "1.2 Virtualization",
+            "2.1 Infrastructure connectivity",
+            "3.3 OSPF",
+            "4.6 ACLs",
+            "5.4 SNMP",
+        ])
         section, weight = _section_meta(section_key)
         body = f"What is the key difference between {a} and {b}?"
         if body in seen_bodies:
@@ -174,13 +160,13 @@ def gen_ccna_comparisons_single(rng: random.Random, count: int) -> list[Question
         seen_bodies.add(body)
         correct = diff
         wrongs = []
-        for x, y, d, _ in pool:
+        for x, y, d in pool:
             if (x, y) != (a, b) and (x == a or x == b or y == a or y == b):
                 wrongs.append(d)
                 if len(wrongs) >= 3:
                     break
         while len(wrongs) < 3:
-            _, _, d, _ = rng.choice(pool)
+            _, _, d = rng.choice(pool)
             if d != diff and d not in wrongs:
                 wrongs.append(d)
         options = [(correct, True)] + [(w, False) for w in wrongs[:3]]
@@ -192,7 +178,7 @@ def gen_ccna_comparisons_single(rng: random.Random, count: int) -> list[Question
     return out
 
 
-def gen_ccna_scenarios_single(rng: random.Random, count: int) -> list[Question]:
+def gen_ccna_scenarios(rng: random.Random, count: int) -> list[Question]:
     out = []
     pool = list(CCNA_SCENARIOS)
     seen_bodies = set()
@@ -201,7 +187,7 @@ def gen_ccna_scenarios_single(rng: random.Random, count: int) -> list[Question]:
         attempts += 1
         scenario, condition, result, section_key = rng.choice(pool)
         section, weight = _section_meta(section_key)
-        body = f"{scenario}\n{condition}\nWhat is the expected result?"
+        body = f"{scenario}\n{condition}\nWhat is the most likely result or action?"
         if body in seen_bodies:
             continue
         seen_bodies.add(body)
@@ -301,328 +287,130 @@ def gen_ccna_multiple_choice(rng: random.Random, count: int) -> list[Question]:
     return out
 
 
-def gen_ccna_protocols(rng: random.Random, count: int) -> list[Question]:
-    """Generate questions from structured protocol data: ports, transport, layer."""
-    out = []
-    pool = list(CCNA_PROTOCOLS)
-    seen = set()
-    attempts = 0
-    templates = [
-        ("Which protocol uses {transport} port {port}?", "name", "port"),
-        ("What is the default port for {name}?", "port", "port"),
-        ("Which transport protocol does {name} use?", "transport", "transport"),
-    ]
-    while len(out) < count and attempts < count * 20:
-        attempts += 1
-        name, port, transport, layer, section_key = rng.choice(pool)
-        template, correct_attr, wrong_attr = rng.choice(templates)
-        body = template.format(name=name, port=port, transport=transport)
-        if body in seen:
-            continue
-        seen.add(body)
-        section, weight = _section_meta(section_key)
-        if correct_attr == "name":
-            correct = name
-            wrong_pool = [n for n, _, _, _, _ in pool if n != name]
-        elif correct_attr == "port":
-            correct = port
-            wrong_pool = [p for _, p, _, _, _ in pool if p != port]
-        else:
-            correct = transport
-            wrong_pool = [t for _, _, t, _, _ in pool if t != transport]
-        wrongs = pick_n(wrong_pool, rng, 3, exclude=correct)
-        options = [(correct, True)] + [(w, False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        explanation = f"{name} uses {transport} port {port}."
-        out.append(make_single_choice(
-            EXAMS["ccna"], body, options, explanation, section, weight, 2, "remember"
-        ))
-    return out
+def _random_ipv4_network(rng: random.Random, mask_len: int | None = None) -> tuple[str, int, str, str, str, str, str]:
+    if mask_len is None:
+        mask_len = rng.choice([24, 25, 26, 27, 28, 30])
+    network_int = rng.randint(0x0A000000, 0x0AFFFFFF) & (0xFFFFFFFF << (32 - mask_len))
+    network = ipaddress.IPv4Network((network_int, mask_len), strict=False)
+    hosts = list(network.hosts())
+    if not hosts:
+        return _random_ipv4_network(rng, mask_len)
+    ip = str(rng.choice(hosts))
+    first = str(hosts[0])
+    last = str(hosts[-1])
+    broadcast = str(network.broadcast_address)
+    num_hosts = len(hosts)
+    return ip, mask_len, str(network.network_address), broadcast, first, last, str(num_hosts)
 
 
-def gen_ccna_devices(rng: random.Random, count: int) -> list[Question]:
-    """Generate questions about network devices and OSI layers."""
-    out = []
-    pool = list(CCNA_DEVICES)
-    seen = set()
-    attempts = 0
-    templates = [
-        ("At which OSI layer does a {name} primarily operate?", "layer", "layer"),
-        ("Which device {function}?", "name", "name"),
-        ("What is the primary function of a {name}?", "function", "function"),
-    ]
-    while len(out) < count and attempts < count * 20:
-        attempts += 1
-        name, layer, function, section_key = rng.choice(pool)
-        template, correct_attr, _ = rng.choice(templates)
-        body = template.format(name=name, layer=layer, function=function)
-        if body in seen:
-            continue
-        seen.add(body)
-        section, weight = _section_meta(section_key)
-        if correct_attr == "name":
-            correct = name
-            wrong_pool = [n for n, _, _, _ in pool if n != name]
-        elif correct_attr == "layer":
-            correct = layer
-            wrong_pool = list({l for _, l, _, _ in pool if l != layer})
-        else:
-            correct = function.capitalize()
-            wrong_pool = [f.capitalize() for _, _, f, _ in pool if f != function]
-        wrongs = pick_n(wrong_pool, rng, 3, exclude=correct)
-        options = [(correct, True)] + [(w, False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        explanation = f"{name} operates at {layer} and {function}."
-        out.append(make_single_choice(
-            EXAMS["ccna"], body, options, explanation, section, weight, 2, "remember"
-        ))
-    return out
-
-
-def gen_ccna_cables(rng: random.Random, count: int) -> list[Question]:
-    """Generate questions about cabling characteristics."""
-    out = []
-    pool = list(CCNA_CABLES)
-    seen = set()
-    attempts = 0
-    templates = [
-        ("Which cable type supports {speed} at {distance}?", "type", "type"),
-        ("What is the maximum distance of {type} at {speed}?", "distance", "distance"),
-        ("Which cable category is {category}?", "type", "type"),
-    ]
-    while len(out) < count and attempts < count * 20:
-        attempts += 1
-        ctype, speed, distance, category, section_key = rng.choice(pool)
-        template, correct_attr, _ = rng.choice(templates)
-        body = template.format(type=ctype, speed=speed, distance=distance, category=category)
-        if body in seen:
-            continue
-        seen.add(body)
-        section, weight = _section_meta(section_key)
-        if correct_attr == "type":
-            correct = ctype
-            wrong_pool = [t for t, _, _, _, _ in pool if t != ctype]
-        elif correct_attr == "distance":
-            correct = distance
-            wrong_pool = [d for _, _, d, _, _ in pool if d != distance]
-        else:
-            correct = category
-            wrong_pool = [c for _, _, _, c, _ in pool if c != category]
-        wrongs = pick_n(wrong_pool, rng, 3, exclude=correct)
-        options = [(correct, True)] + [(w, False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        explanation = f"{ctype} supports {speed} up to {distance} and is {category}."
-        out.append(make_single_choice(
-            EXAMS["ccna"], body, options, explanation, section, weight, 2, "remember"
-        ))
-    return out
-
-
-def gen_ccna_wireless(rng: random.Random, count: int) -> list[Question]:
-    """Generate questions about wireless standards."""
-    out = []
-    pool = list(CCNA_WIRELESS)
-    seen = set()
-    attempts = 0
-    templates = [
-        ("Which IEEE 802.11 standard operates in the {band} band?", "name", "name"),
-        ("What is the maximum data rate of {name}?", "speed", "speed"),
-        ("Which Wi-Fi standard {speed} in the {band} band?", "name", "name"),
-    ]
-    while len(out) < count and attempts < count * 20:
-        attempts += 1
-        name, band, speed, section_key = rng.choice(pool)
-        template, correct_attr, _ = rng.choice(templates)
-        body = template.format(name=name, band=band, speed=speed)
-        if body in seen:
-            continue
-        seen.add(body)
-        section, weight = _section_meta(section_key)
-        if correct_attr == "name":
-            correct = name
-            wrong_pool = [n for n, _, _, _ in pool if n != name]
-        elif correct_attr == "speed":
-            correct = speed
-            wrong_pool = [s for _, _, s, _ in pool if s != speed]
-        else:
-            correct = band
-            wrong_pool = [b for _, b, _, _ in pool if b != band]
-        wrongs = pick_n(wrong_pool, rng, 3, exclude=correct)
-        options = [(correct, True)] + [(w, False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        explanation = f"{name} operates in the {band} band with a maximum speed of {speed}."
-        out.append(make_single_choice(
-            EXAMS["ccna"], body, options, explanation, section, weight, 2, "remember"
-        ))
-    return out
+def _random_ipv6_network(rng: random.Random) -> tuple[str, int, int, str]:
+    prefix_len = rng.choice([48, 56, 60, 64])
+    sub_prefix_len = rng.choice([72, 80, 96])
+    if sub_prefix_len <= prefix_len:
+        sub_prefix_len = prefix_len + 8
+    network = ipaddress.IPv6Network((rng.getrandbits(128), prefix_len), strict=False)
+    num_subnets = 2 ** (sub_prefix_len - prefix_len)
+    return str(network.network_address), prefix_len, sub_prefix_len, str(num_subnets)
 
 
 def gen_ccna_subnetting(rng: random.Random, count: int) -> list[Question]:
     out = []
-    networks = ["192.168", "10.0", "172.16", "203.0.113", "198.51.100"]
-    seen = set()
+    pool = list(CCNA_SUBNETTING_POOLS)
+    seen_bodies = set()
     attempts = 0
     while len(out) < count and attempts < count * 20:
         attempts += 1
-        network = rng.choice(networks)
-        host = rng.randint(1, 240)
-        prefix = rng.choice([24, 25, 26, 27, 28, 29, 30])
-        block = 2 ** (32 - prefix)
-        net_addr = (host // block) * block
-        bcast = net_addr + block - 1
-        first = net_addr + 1
-        last = bcast - 1
-        qtype = rng.choice(["first", "last", "bcast", "hosts"])
-        key = (network, host, prefix, qtype)
-        if key in seen:
-            continue
-        seen.add(key)
-        if qtype == "first":
-            body = f"What is the first valid host address in the subnet {network}.{host}/{prefix}?"
-            correct = f"{network}.{first}"
-            opts = [f"{network}.{net_addr}", f"{network}.{first}", f"{network}.{last}", f"{network}.{bcast}"]
-            explanation = f"For /{prefix} the block size is {block}. Network={network}.{net_addr}, first host={network}.{first}."
-        elif qtype == "last":
-            body = f"What is the last valid host address in the subnet {network}.{host}/{prefix}?"
-            correct = f"{network}.{last}"
-            opts = [f"{network}.{net_addr}", f"{network}.{first}", f"{network}.{last}", f"{network}.{bcast}"]
-            explanation = f"For /{prefix} the block size is {block}. Broadcast={network}.{bcast}, last host={network}.{last}."
-        elif qtype == "bcast":
-            body = f"What is the broadcast address for the subnet {network}.{host}/{prefix}?"
-            correct = f"{network}.{bcast}"
-            opts = [f"{network}.{net_addr}", f"{network}.{first}", f"{network}.{last}", f"{network}.{bcast}"]
-            explanation = f"For /{prefix} the next network is {network}.{net_addr + block}, so broadcast={network}.{bcast}."
+        template = rng.choice(pool)
+        section_key = template["section_key"]
+        section, weight = _section_meta(section_key)
+        answer_type = template["answer_type"]
+        if answer_type == "ipv6_subnets":
+            network, prefix_len, sub_prefix_len, num_subnets = _random_ipv6_network(rng)
+            body = template["question"].format(ipv6_network=network, prefix_len=prefix_len, sub_prefix_len=sub_prefix_len)
+            correct = num_subnets
+            explanation = f"A /{prefix_len} prefix can be split into /{sub_prefix_len} subnets: 2^({sub_prefix_len}-{prefix_len}) = {num_subnets}."
         else:
-            hosts = block - 2
-            body = f"How many usable host addresses are available in a /{prefix} subnet?"
-            correct = str(hosts)
-            opts = [str(hosts - 1), str(hosts), str(hosts + 1), str(block)]
-            explanation = f"A /{prefix} subnet has {block} total addresses. Subtract network and broadcast to get {hosts} usable hosts."
-        rng.shuffle(opts)
-        options = [(o, o == correct) for o in opts]
+            ip, mask_len, network, broadcast, first, last, num_hosts = _random_ipv4_network(rng)
+            body = template["question"].format(ip=ip, mask_len=mask_len, network=network)
+            if answer_type == "network":
+                correct = network
+                explanation = f"The network address for {ip}/{mask_len} is {network}."
+            elif answer_type == "broadcast":
+                correct = broadcast
+                explanation = f"The broadcast address for {network}/{mask_len} is {broadcast}."
+            elif answer_type == "hosts":
+                correct = num_hosts
+                explanation = f"A /{mask_len} subnet has 2^(32-{mask_len}) - 2 = {num_hosts} usable hosts."
+            elif answer_type == "last_host":
+                correct = last
+                explanation = f"The last usable host in {network}/{mask_len} is {last}."
+            else:
+                continue
+        if body in seen_bodies:
+            continue
+        seen_bodies.add(body)
+        distractors = []
+        if answer_type in ("network", "broadcast", "last_host"):
+            for _ in range(10):
+                _, ml, net, brc, first2, last2, _ = _random_ipv4_network(rng, mask_len)
+                val = {"network": net, "broadcast": brc, "last_host": last2}.get(answer_type, first2)
+                if val != correct and val not in distractors:
+                    distractors.append(val)
+        elif answer_type == "hosts":
+            for m in [24, 25, 26, 27, 28, 29, 30]:
+                if m != mask_len:
+                    h = (1 << (32 - m)) - 2
+                    if h > 0 and str(h) != correct and str(h) not in distractors:
+                        distractors.append(str(h))
+        else:
+            for delta in [2, 4, 8, 16, 32]:
+                try:
+                    val = int(correct) * delta
+                    if str(val) != str(correct) and str(val) not in distractors:
+                        distractors.append(str(val))
+                except ValueError:
+                    pass
+        options = [(str(correct), True)] + [(str(d), False) for d in distractors[:5]]
+        options, _ = shuffle_options(options, rng)
         out.append(make_single_choice(
-            EXAMS["ccna"], body, options, explanation,
-            "1.0 Network Fundamentals", 20.0, 3, "apply"
-        ))
-    return out
-
-
-def gen_ccna_protocols_multiple(rng: random.Random, count: int) -> list[Question]:
-    """Multiple-choice questions about groups of protocols."""
-    out = []
-    pool = list(CCNA_PROTOCOLS)
-    templates = [
-        ("Which protocols use {transport}? (Choose two or three.)", "transport"),
-        ("Which protocols are considered connection-oriented or reliable? (Choose two or three.)", "reliable"),
-        ("Which protocols are commonly used for network management? (Choose two or three.)", "mgmt"),
-    ]
-    seen_bodies = set()
-    attempts = 0
-    while len(out) < count and attempts < count * 40:
-        attempts += 1
-        template, mode = rng.choice(templates)
-        if mode == "transport":
-            transport = rng.choice(["TCP", "UDP"])
-            corrects = [n for n, p, t, l, _ in pool if t == transport or (transport == "TCP" and t == "UDP/TCP")]
-            if len(corrects) < 2:
-                continue
-            n_correct = min(rng.choice([2, 3]), len(corrects))
-            selected = rng.sample(corrects, n_correct)
-            wrong_pool = [n for n, _, t, _, _ in pool if t != transport and t != "UDP/TCP"]
-            body = template.format(transport=transport)
-        elif mode == "reliable":
-            reliable = {"SSH", "FTP", "SFTP", "SMTP", "POP3", "IMAP", "HTTP", "HTTPS", "BGP", "TACACS+", "LDAPS"}
-            corrects = [n for n, _, _, _, _ in pool if n in reliable]
-            n_correct = min(rng.choice([2, 3]), len(corrects))
-            selected = rng.sample(corrects, n_correct)
-            wrong_pool = [n for n, _, _, _, _ in pool if n not in reliable]
-            body = template
-        else:
-            mgmt = {"SNMP", "Syslog", "SSH", "NTP", "DNS", "DHCP server", "DHCP client"}
-            corrects = [n for n, _, _, _, _ in pool if n in mgmt]
-            n_correct = min(rng.choice([2, 3]), len(corrects))
-            selected = rng.sample(corrects, n_correct)
-            wrong_pool = [n for n, _, _, _, _ in pool if n not in mgmt]
-            body = template
-        if len(wrong_pool) < 6 - n_correct:
-            continue
-        if body in seen_bodies:
-            # Vary the body slightly by appending a small random detail
-            body = body + f" (variant {len(out)})"
-            if body in seen_bodies:
-                continue
-        seen_bodies.add(body)
-        wrongs = rng.sample(wrong_pool, 6 - n_correct)
-        options = [(c, True) for c in selected] + [(w, False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        section, weight = _section_meta("1.4 TCP/UDP")
-        out.append(make_multiple_choice(
             EXAMS["ccna"], body, options,
-            f"Correct answers: {', '.join(selected)}.", section, weight, 3, "understand"
-        ))
-    return out
-
-
-def gen_ccna_devices_multiple(rng: random.Random, count: int) -> list[Question]:
-    """Multiple-choice questions about device OSI layers/functions."""
-    out = []
-    pool = list(CCNA_DEVICES)
-    templates = [
-        ("Which devices primarily operate at {layer}? (Choose two or three.)", "layer"),
-    ]
-    seen_bodies = set()
-    attempts = 0
-    while len(out) < count and attempts < count * 40:
-        attempts += 1
-        template, mode = rng.choice(templates)
-        layer = rng.choice(list({l for _, l, _, _ in pool}))
-        corrects = [n for n, l2, _, _ in pool if l2 == layer]
-        if len(corrects) < 2:
-            continue
-        n_correct = min(rng.choice([2, 3]), len(corrects))
-        selected = rng.sample(corrects, n_correct)
-        wrong_pool = [n for n, l2, _, _ in pool if l2 != layer]
-        if len(wrong_pool) < 6 - n_correct:
-            continue
-        body = template.format(layer=layer)
-        if body in seen_bodies:
-            body = body + f" (variant {len(out)})"
-            if body in seen_bodies:
-                continue
-        seen_bodies.add(body)
-        wrongs = rng.sample(wrong_pool, 6 - n_correct)
-        options = [(c, True) for c in selected] + [(w, False) for w in wrongs]
-        options, _ = shuffle_options(options, rng)
-        section, weight = _section_meta("1.1 Network Components")
-        out.append(make_multiple_choice(
-            EXAMS["ccna"], body, options,
-            f"Correct answers operate at {layer}: {', '.join(selected)}.", section, weight, 3, "understand"
+            explanation, section, weight, 3, "apply"
         ))
     return out
 
 
 def gen_ccna_categorical_multiple(rng: random.Random, count: int) -> list[Question]:
-    """Generate multiple-choice questions by asking which terms belong to a section."""
     out = []
     pool = list(CCNA_TERMS)
-    # Group terms by section
     by_section = {}
     for term, _, section_key in pool:
         by_section.setdefault(section_key, []).append(term)
     eligible = [(sk, terms) for sk, terms in by_section.items() if len(terms) >= 4]
+    templates = [
+        "Which of the following are {category}? (Choose {n}.)",
+        "Select the items that are {category}. (Choose {n}.)",
+        "Which terms describe {category}? (Choose {n}.)",
+        "Choose the {category} items from the list. (Choose {n}.)",
+        "Which statements are true for {category}? (Choose {n} terms.)",
+        "Identify the {category}. (Choose {n}.)",
+        "Pick the {category} from the options. (Choose {n}.)",
+        "Which options represent {category}? (Choose {n}.)",
+    ]
     seen_bodies = set()
     attempts = 0
-    while len(out) < count and attempts < count * 20:
+    while len(out) < count and attempts < count * 100:
         attempts += 1
         section_key, terms = rng.choice(eligible)
         if section_key not in CCNA_CATEGORIES:
             continue
         category = CCNA_CATEGORIES[section_key]
-        body = f"Which of the following are {category}? (Choose two or three.)"
+        n_correct = rng.choice([2, 3])
+        n_text = "two" if n_correct == 2 else "three"
+        template = rng.choice(templates)
+        body = template.format(category=category, n=n_text)
         if body in seen_bodies:
             continue
         seen_bodies.add(body)
-        n_correct = rng.choice([2, 3])
         corrects = rng.sample(terms, n_correct)
         wrong_pool = [t for t, _, sk in pool if sk != section_key]
         wrongs = rng.sample(wrong_pool, 6 - n_correct)
@@ -639,30 +427,22 @@ def gen_ccna_categorical_multiple(rng: random.Random, count: int) -> list[Questi
 def generate_ccna(total: int = 1000, seed: int = 42) -> list[Question]:
     rng = random.Random(seed)
     questions: list[Question] = []
-    questions += gen_ccna_terms_single(rng, 120)
-    questions += gen_ccna_terms_definition(rng, 60)
-    questions += gen_ccna_protocols(rng, 50)
-    questions += gen_ccna_protocols_multiple(rng, 60)
-    questions += gen_ccna_devices(rng, 30)
-    questions += gen_ccna_devices_multiple(rng, 30)
-    questions += gen_ccna_cables(rng, 20)
-    questions += gen_ccna_wireless(rng, 20)
-    questions += gen_ccna_commands_single(rng, 52)
-    questions += gen_ccna_commands_which(rng, 52)
-    questions += gen_ccna_comparisons_single(rng, 24)
-    questions += gen_ccna_scenarios_single(rng, 49)
-    questions += gen_ccna_simlets(rng, 22)
-    questions += gen_ccna_drag_drop(rng, 14)
-    questions += gen_ccna_fill_blank(rng, 20)
-    questions += gen_ccna_multiple_choice(rng, 32)
-    questions += gen_ccna_categorical_multiple(rng, 80)
-    questions += gen_ccna_subnetting(rng, 120)
+    questions += gen_ccna_terms_single(rng, 200)
+    questions += gen_ccna_terms_definition(rng, 150)
+    questions += gen_ccna_commands(rng, 62)
+    questions += gen_ccna_comparisons(rng, 15)
+    questions += gen_ccna_scenarios(rng, 61)
+    questions += gen_ccna_simlets(rng, 8)
+    questions += gen_ccna_drag_drop(rng, 9)
+    questions += gen_ccna_fill_blank(rng, 22)
+    questions += gen_ccna_multiple_choice(rng, 27)
+    questions += gen_ccna_categorical_multiple(rng, 400)
+    questions += gen_ccna_subnetting(rng, 80)
     questions = unique_questions(questions)
     if len(questions) > total:
         questions = rng.sample(questions, total)
-    # If we still have fewer than requested, add more subnetting
     while len(questions) < total:
-        extra = gen_ccna_subnetting(rng, total - len(questions) + 10)
+        extra = gen_ccna_scenarios(rng, total - len(questions) + 10)
         questions += extra
         questions = unique_questions(questions)
     return questions[:total]

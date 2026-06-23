@@ -93,7 +93,7 @@ func main() {
 
 	// Create router with all dependencies
 	// WebSocket SSH proxy routes are mounted at /ws/ inside NewRouter
-	router := delivery.NewRouter(authUC, examUC, explanationUC, labUC, quickLabUC, studyProgressUC, jwtManager, getEnv("APP_ENV", "development"))
+	router := delivery.NewRouter(authUC, examUC, explanationUC, labUC, quickLabUC, studyProgressUC, jwtManager)
 
 	// Create server
 	srv := &http.Server{

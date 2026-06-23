@@ -4,6 +4,26 @@
 
 NetCert is a certification practice platform with a Go backend, Next.js frontend, and PostgreSQL database. Question banks are managed through `goose` SQL migrations in `backend/migrations/`.
 
+## Running the full stack
+
+Start the entire application with one command:
+
+```bash
+cp backend/.env.example backend/.env
+make up
+```
+
+This builds and starts PostgreSQL, Redis, backend, and frontend. Migrations are applied automatically before the backend starts.
+
+- Frontend: http://localhost:3000
+- API health: http://localhost:8080/health
+
+Stop the stack:
+
+```bash
+make down
+```
+
 ## Question generation
 
 High-quality, blueprint-aligned questions are generated from content pools by Python scripts in `scripts/generators/`.

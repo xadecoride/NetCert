@@ -79,8 +79,6 @@ export const ru: Record<string, any> = {
   auth: {
     welcomeBack: "С возвращением",
     signInSubtitle: "Войдите, чтобы продолжить подготовку",
-    devMode: "РЕЖИМ РАЗРАБОТЧИКА — без пароля",
-    devLogin: "Dev Login (без пароля)",
     email: "Email",
     emailPlaceholder: "you@example.com",
     password: "Пароль",

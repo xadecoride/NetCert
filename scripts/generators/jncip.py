@@ -4,6 +4,8 @@ import random
 from .common import (
     EXAMS,
     Question,
+    make_drag_drop,
+    make_fill_blank,
     make_multiple_choice,
     make_simlet,
     make_single_choice,
@@ -13,12 +15,16 @@ from .common import (
 )
 from .jncip_pools import (
     JNCIP_ENT_COMMANDS,
+    JNCIP_ENT_DRAG_DROP_POOLS,
+    JNCIP_ENT_FILL_BLANK_POOLS,
     JNCIP_ENT_MULTIPLE_CHOICE,
     JNCIP_ENT_SCENARIOS,
     JNCIP_ENT_SECTIONS,
     JNCIP_ENT_SIMLETS,
     JNCIP_ENT_TERMS,
     JNCIP_SP_COMMANDS,
+    JNCIP_SP_DRAG_DROP_POOLS,
+    JNCIP_SP_FILL_BLANK_POOLS,
     JNCIP_SP_MULTIPLE_CHOICE,
     JNCIP_SP_SCENARIOS,
     JNCIP_SP_SECTIONS,
@@ -172,14 +178,125 @@ def gen_multiple_choice(rng, exam, sections, mc_pools, count):
     return out
 
 
-def generate_jncip_ent(total: int = 250, seed: int = 42) -> list[Question]:
+def gen_drag_drop(rng, exam, sections, dd_pools, count):
+    out = []
+    pool = list(dd_pools)
+    seen = set()
+    attempts = 0
+    while len(out) < count and attempts < count * 10:
+        attempts += 1
+        section_key, title, pairs = rng.choice(pool)
+        if title in seen:
+            continue
+        seen.add(title)
+        section, weight = _section_meta(sections, section_key)
+        selected_pairs = pairs if len(pairs) <= 6 else rng.sample(pairs, 6)
+        out.append(make_drag_drop(
+            exam, title, selected_pairs,
+            f"Match the items: {title}", section, weight, 3, "understand"
+        ))
+    return out
+
+
+def gen_fill_blank(rng, exam, sections, fb_pools, count):
+    out = []
+    pool = list(fb_pools)
+    seen = set()
+    attempts = 0
+    while len(out) < count and attempts < count * 10:
+        attempts += 1
+        section_key, stem, correct, distractors = rng.choice(pool)
+        if stem in seen:
+            continue
+        seen.add(stem)
+        section, weight = _section_meta(sections, section_key)
+        options = [correct] + distractors
+        rng.shuffle(options)
+        out.append(make_fill_blank(
+            exam, stem, correct, options,
+            f"The correct completion is '{correct}'.", section, weight, 3, "apply"
+        ))
+    return out
+
+
+def gen_categorical_multiple(rng, exam, sections, terms, categories, count):
+    out = []
+    pool = list(terms)
+    by_section = {}
+    for term, _, section_key in pool:
+        by_section.setdefault(section_key, []).append(term)
+    eligible = [(sk, tlist) for sk, tlist in by_section.items() if len(tlist) >= 4 and sk in categories]
+    templates = [
+        "Which of the following are related to {category}? (Choose {n}.)",
+        "Select the items related to {category}. (Choose {n}.)",
+        "Which terms describe {category}? (Choose {n}.)",
+        "Choose the {category} items from the list. (Choose {n}.)",
+    ]
+    seen_bodies = set()
+    attempts = 0
+    while len(out) < count and attempts < count * 100:
+        attempts += 1
+        section_key, section_terms = rng.choice(eligible)
+        category = categories[section_key]
+        n_correct = rng.choice([2, 3])
+        n_text = "two" if n_correct == 2 else "three"
+        template = rng.choice(templates)
+        body = template.format(category=category, n=n_text)
+        if body in seen_bodies:
+            continue
+        seen_bodies.add(body)
+        corrects = rng.sample(section_terms, n_correct)
+        wrong_pool = [t for t, _, sk in pool if sk != section_key]
+        wrongs = rng.sample(wrong_pool, 6 - n_correct)
+        options = [(c, True) for c in corrects] + [(w, False) for w in wrongs]
+        options, _ = shuffle_options(options, rng)
+        section, weight = _section_meta(sections, section_key)
+        explanation = f"Correct answers are related to {category}: {', '.join(corrects)}."
+        out.append(make_multiple_choice(
+            exam, body, options, explanation, section, weight, 3, "understand"
+        ))
+    return out
+
+
+# JNCIP section labels used for categorical multiple-choice questions
+JNCIP_ENT_CATEGORIES = {
+    "1.1 OSPF": "OSPF concepts",
+    "1.2 IS-IS": "IS-IS concepts",
+    "2.1 BGP basics": "BGP basics",
+    "2.2 BGP attributes": "BGP attributes",
+    "2.3 BGP scaling": "BGP scaling mechanisms",
+    "3.0 IP Multicast": "IP multicast",
+    "4.0 Ethernet Switching": "Ethernet switching",
+    "5.0 CoS": "Class of Service",
+    "6.0 EVPN": "EVPN",
+    "7.0 Layer 3 VPN": "Layer 3 VPNs",
+    "8.0 Layer 2 VPN": "Layer 2 VPNs",
+    "9.0 High Availability": "high availability",
+}
+
+JNCIP_SP_CATEGORIES = {
+    "1.0 OSPF": "OSPF concepts",
+    "2.0 IS-IS": "IS-IS concepts",
+    "3.0 BGP": "BGP concepts",
+    "4.0 MPLS": "MPLS concepts",
+    "5.0 L3VPN": "Layer 3 VPNs",
+    "6.0 L2VPN": "Layer 2 VPNs",
+    "7.0 Multicast": "IP multicast",
+    "8.0 CoS": "Class of Service",
+}
+
+
+def generate_jncip_ent(total: int = 200, seed: int = 42) -> list[Question]:
     rng = random.Random(seed)
     questions = []
     questions += gen_terms_single(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_TERMS, 120)
-    questions += gen_commands(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_COMMANDS, 60)
-    questions += gen_scenarios(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_SCENARIOS, 60)
-    questions += gen_simlets(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_SIMLETS, 30)
-    questions += gen_multiple_choice(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_MULTIPLE_CHOICE, 60)
+    questions += gen_commands(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_COMMANDS, 50)
+    questions += gen_scenarios(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_SCENARIOS, 50)
+    questions += gen_simlets(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_SIMLETS, 15)
+    questions += gen_multiple_choice(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_MULTIPLE_CHOICE, 30)
+    questions += gen_drag_drop(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_DRAG_DROP_POOLS, 15)
+    questions += gen_fill_blank(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_FILL_BLANK_POOLS, 22)
+    questions += gen_categorical_multiple(rng, EXAMS["jncip-ent"], JNCIP_ENT_SECTIONS, JNCIP_ENT_TERMS, JNCIP_ENT_CATEGORIES, 100)
     questions = unique_questions(questions)
     if len(questions) > total:
         questions = rng.sample(questions, total)
@@ -190,14 +307,17 @@ def generate_jncip_ent(total: int = 250, seed: int = 42) -> list[Question]:
     return questions[:total]
 
 
-def generate_jncip_sp(total: int = 200, seed: int = 42) -> list[Question]:
+def generate_jncip_sp(total: int = 180, seed: int = 42) -> list[Question]:
     rng = random.Random(seed)
     questions = []
     questions += gen_terms_single(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_TERMS, 120)
-    questions += gen_commands(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_COMMANDS, 60)
-    questions += gen_scenarios(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_SCENARIOS, 60)
-    questions += gen_simlets(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_SIMLETS, 30)
-    questions += gen_multiple_choice(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_MULTIPLE_CHOICE, 60)
+    questions += gen_commands(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_COMMANDS, 50)
+    questions += gen_scenarios(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_SCENARIOS, 50)
+    questions += gen_simlets(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_SIMLETS, 15)
+    questions += gen_multiple_choice(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_MULTIPLE_CHOICE, 30)
+    questions += gen_drag_drop(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_DRAG_DROP_POOLS, 15)
+    questions += gen_fill_blank(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_FILL_BLANK_POOLS, 18)
+    questions += gen_categorical_multiple(rng, EXAMS["jncip-sp"], JNCIP_SP_SECTIONS, JNCIP_SP_TERMS, JNCIP_SP_CATEGORIES, 80)
     questions = unique_questions(questions)
     if len(questions) > total:
         questions = rng.sample(questions, total)
