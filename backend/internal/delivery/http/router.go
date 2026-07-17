@@ -53,13 +53,19 @@ func NewRouter(
 		w.Write([]byte(`{"status":"ok","version":"1.0.0"}`))
 	})
 
-	// Lab WebSocket endpoints (public for now; will add auth later)
+	// WebSocket endpoints — authenticated via JWT (Bearer header or ?token= query param).
+	// Previously these were public ("will add auth later"), which allowed anyone with
+	// the URL to obtain an interactive shell into a sandbox / lab device.
+	// See AUDIT_TECHNICAL.md §1.2 (ROADMAP_DEV.md Phase 0.3).
 	sandboxHandler := ws.NewSandboxHandler(nil)
 	if labUC != nil {
 		sshProxy := ws.NewSSHProxy(labUC, "")
-		r.Route("/ws", func(r chi.Router) {
-			sshProxy.RegisterRoutes(r)
-			sandboxHandler.RegisterRoutes(r)
+		r.Group(func(r chi.Router) {
+			r.Use(authMw.AuthenticateWS)
+			r.Route("/ws", func(r chi.Router) {
+				sshProxy.RegisterRoutes(r)
+				sandboxHandler.RegisterRoutes(r)
+			})
 		})
 	}
 

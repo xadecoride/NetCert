@@ -519,12 +519,36 @@ func (uc *LabUseCase) saveZeroScore(ctx context.Context, sub *domain.LabSubmissi
 }
 
 // GetSubmission returns a lab submission by ID.
-func (uc *LabUseCase) GetSubmission(ctx context.Context, id uuid.UUID) (*domain.LabSubmission, error) {
-	return uc.labRepo.GetSubmission(ctx, id)
+// Ownership is enforced: userID must match submission.UserID, otherwise
+// domain.ErrForbidden is returned (IDOR protection — see AUDIT_TECHNICAL.md §1.1).
+func (uc *LabUseCase) GetSubmission(ctx context.Context, userID, id uuid.UUID) (*domain.LabSubmission, error) {
+	sub, err := uc.labRepo.GetSubmission(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if sub == nil {
+		return nil, domain.ErrNotFound
+	}
+	if sub.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
+	return sub, nil
 }
 
 // GetScores returns all scores for a submission.
-func (uc *LabUseCase) GetScores(ctx context.Context, submissionID uuid.UUID) ([]domain.LabScore, error) {
+// Ownership is enforced: userID must match the submission owner, otherwise
+// domain.ErrForbidden is returned (IDOR protection — see AUDIT_TECHNICAL.md §1.1).
+func (uc *LabUseCase) GetScores(ctx context.Context, userID, submissionID uuid.UUID) ([]domain.LabScore, error) {
+	sub, err := uc.labRepo.GetSubmission(ctx, submissionID)
+	if err != nil {
+		return nil, err
+	}
+	if sub == nil {
+		return nil, domain.ErrNotFound
+	}
+	if sub.UserID != userID {
+		return nil, domain.ErrForbidden
+	}
 	return uc.labRepo.GetLabScores(ctx, submissionID)
 }
 

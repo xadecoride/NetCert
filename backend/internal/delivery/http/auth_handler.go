@@ -2,10 +2,12 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/netcert/backend/internal/domain"
 	"github.com/netcert/backend/internal/middleware"
+	"github.com/netcert/backend/internal/pkg/validator"
 	"github.com/netcert/backend/internal/usecase"
 )
 
@@ -24,9 +26,14 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validator.Struct(req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
 	resp, err := h.authUseCase.Register(r.Context(), req)
 	if err != nil {
-		if err == usecase.ErrEmailAlreadyExists {
+		if errors.Is(err, usecase.ErrEmailAlreadyExists) {
 			writeJSON(w, http.StatusConflict, map[string]string{"error": "email_already_exists", "message": "User with this email already registered"})
 			return
 		}
@@ -44,9 +51,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := validator.Struct(req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
 	resp, err := h.authUseCase.Login(r.Context(), req)
 	if err != nil {
-		if err == usecase.ErrInvalidCredentials {
+		if errors.Is(err, usecase.ErrInvalidCredentials) {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_credentials", "message": "Invalid email or password"})
 			return
 		}
@@ -109,15 +121,20 @@ func (h *AuthHandler) UpdateEmail(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.GetUserID(r.Context())
 
 	var req struct {
-		Email string `json:"email"`
+		Email string `json:"email" validate:"required,email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
 		return
 	}
 
+	if err := validator.Struct(req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+
 	if err := h.authUseCase.UpdateEmail(r.Context(), userID, req.Email); err != nil {
-		if err == usecase.ErrEmailAlreadyExists {
+		if errors.Is(err, usecase.ErrEmailAlreadyExists) {
 			writeJSON(w, http.StatusConflict, map[string]string{"error": "email_already_exists"})
 			return
 		}

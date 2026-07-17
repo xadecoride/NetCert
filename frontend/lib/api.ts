@@ -35,7 +35,6 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     if (response.status === 401) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
         // Redirect to login if not already there
         if (!window.location.pathname.startsWith("/auth/")) {
           window.location.href = "/auth/login";

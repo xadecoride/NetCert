@@ -61,16 +61,10 @@ func (uc *AuthUseCase) Register(ctx context.Context, req domain.RegisterRequest)
 		return nil, err
 	}
 
-	refreshToken, err := uc.jwtManager.GenerateRefreshToken(user.ID)
-	if err != nil {
-		return nil, err
-	}
-
 	return &domain.AuthResponse{
-		User:         *user,
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int(uc.jwtManager.AccessTokenTTL().Seconds()),
+		User:        *user,
+		AccessToken: accessToken,
+		ExpiresIn:   int(uc.jwtManager.AccessTokenTTL().Seconds()),
 	}, nil
 }
 
@@ -89,16 +83,10 @@ func (uc *AuthUseCase) Login(ctx context.Context, req domain.LoginRequest) (*dom
 		return nil, err
 	}
 
-	refreshToken, err := uc.jwtManager.GenerateRefreshToken(user.ID)
-	if err != nil {
-		return nil, err
-	}
-
 	return &domain.AuthResponse{
-		User:         *user,
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		ExpiresIn:    int(uc.jwtManager.AccessTokenTTL().Seconds()),
+		User:        *user,
+		AccessToken: accessToken,
+		ExpiresIn:   int(uc.jwtManager.AccessTokenTTL().Seconds()),
 	}, nil
 }
 

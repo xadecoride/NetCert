@@ -144,7 +144,7 @@ export function LabWorkspace({ submissionId }: LabWorkspaceProps) {
 
   const wsUrl =
     typeof window !== "undefined"
-      ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws/lab/${submissionId}/${activeDevice || ""}`
+      ? `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/ws/lab/${submissionId}/${activeDevice || ""}?token=${encodeURIComponent(localStorage.getItem("access_token") || "")}`
       : "";
 
   const toggleTask = (idx: number) => {

@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -98,20 +99,30 @@ func (h *LabHandler) StartLab(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetSubmission returns the status of a lab submission.
+// Ownership-checked in usecase (IDOR protection — AUDIT_TECHNICAL.md §1.1).
 func (h *LabHandler) GetSubmission(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	if userID == uuid.Nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return
+	}
+
 	submissionID, err := uuid.Parse(chi.URLParam(r, "submissionId"))
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid submission id"})
 		return
 	}
 
-	submission, err := h.labUC.GetSubmission(r.Context(), submissionID)
+	submission, err := h.labUC.GetSubmission(r.Context(), userID, submissionID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch submission"})
-		return
-	}
-	if submission == nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "submission not found"})
+		switch {
+		case errors.Is(err, domain.ErrForbidden):
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+		case errors.Is(err, domain.ErrNotFound):
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "submission not found"})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch submission"})
+		}
 		return
 	}
 
@@ -208,16 +219,30 @@ func (h *LabHandler) SubmitModule(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetScores returns all scores for a submission.
+// Ownership-checked in usecase (IDOR protection — AUDIT_TECHNICAL.md §1.1).
 func (h *LabHandler) GetScores(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.GetUserID(r.Context())
+	if userID == uuid.Nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return
+	}
+
 	submissionID, err := uuid.Parse(chi.URLParam(r, "submissionId"))
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid submission id"})
 		return
 	}
 
-	scores, err := h.labUC.GetScores(r.Context(), submissionID)
+	scores, err := h.labUC.GetScores(r.Context(), userID, submissionID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch scores"})
+		switch {
+		case errors.Is(err, domain.ErrForbidden):
+			writeJSON(w, http.StatusForbidden, map[string]string{"error": "forbidden"})
+		case errors.Is(err, domain.ErrNotFound):
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "submission not found"})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch scores"})
+		}
 		return
 	}
 
