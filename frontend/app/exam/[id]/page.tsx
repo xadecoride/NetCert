@@ -461,7 +461,7 @@ export default function ExamSessionPage() {
                     value={textAnswers[currentQuestion.id] || ''}
                     onChange={(e) => handleTextAnswer(e.target.value)}
                     placeholder={t('exam.typeCommand')}
-                    className="w-full px-4 py-3 rounded-xl border border-zinc-700 bg-zinc-900 text-white placeholder-zinc-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/50 outline-none transition-all font-mono text-base"
+                    className="w-full px-4 py-3 rounded-xl border border-zinc-300 bg-zinc-50 text-zinc-900 placeholder-zinc-400 focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 transition-all font-mono text-base dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
                     autoComplete="off"
                     spellCheck={false}
                   />

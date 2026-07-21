@@ -213,7 +213,7 @@ export default function DashboardPage() {
             label: t("dashboard.avgScore"),
             value: avgScore,
             suffix: "%",
-            color: "text-zinc-900 dark:text-white",
+            color: "text-zinc-900 dark:text-zinc-100",
             bg: "bg-zinc-100 dark:bg-zinc-800",
           },
           {
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">{stat.label}</p>
-                    <p className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                    <p className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
                       <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                     </p>
                   </div>
@@ -259,7 +259,7 @@ export default function DashboardPage() {
             <BentoCard>
               <div className="flex items-center gap-2 mb-6">
                 <ChartBar className="h-5 w-5 text-emerald-500" weight="fill" />
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   Last 7 Exam Scores
                 </h2>
               </div>
@@ -321,7 +321,7 @@ export default function DashboardPage() {
             <BentoCard>
               <div className="flex items-center gap-2 mb-6">
                 <Exam className="h-5 w-5 text-emerald-500" weight="fill" />
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   {t("dashboard.recentAttempts")}
                 </h2>
               </div>
@@ -390,7 +390,7 @@ export default function DashboardPage() {
             <BentoCard>
               <div className="flex items-center gap-2 mb-1">
                 <Network className="h-5 w-5 text-emerald-500" weight="fill" />
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   {t("dashboard.certTracks")}
                 </h2>
               </div>
@@ -445,7 +445,7 @@ export default function DashboardPage() {
             <BentoCard>
               <div className="flex items-center gap-2 mb-6">
                 <Target className="h-5 w-5 text-emerald-500" weight="fill" />
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   {t("dashboard.quickActions")}
                 </h2>
               </div>
@@ -481,7 +481,7 @@ export default function DashboardPage() {
             <BentoCard>
               <div className="flex items-center gap-2 mb-6">
                 <Trophy className="h-5 w-5 text-emerald-500" weight="fill" />
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-white">
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   {t("dashboard.achievements")}
                 </h2>
               </div>

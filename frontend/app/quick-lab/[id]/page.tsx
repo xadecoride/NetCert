@@ -244,7 +244,7 @@ export default function QuickLabPage() {
             {lab.estimated_minutes}m
           </span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter text-zinc-900 dark:text-white mb-2">
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100 mb-2">
           {lab.title}
         </h1>
         <p className="text-zinc-500 dark:text-zinc-400 max-w-3xl">

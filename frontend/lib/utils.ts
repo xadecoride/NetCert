@@ -16,9 +16,9 @@ export function formatDuration(seconds: number): string {
   return `${mins}m ${secs}s`;
 }
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, locale: "en" | "ru" = "en"): string {
   const date = new Date(dateStr);
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",

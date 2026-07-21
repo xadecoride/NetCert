@@ -5,12 +5,16 @@ import { cn } from "@/lib/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const buttonVariants = cva(
-  "relative inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97] select-none overflow-hidden",
+  "relative inline-flex items-center justify-center rounded-xl text-sm font-medium transition-all duration-300 " +
+    "focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-emerald-500 focus-visible:outline-offset-2 " +
+    "disabled:opacity-50 disabled:pointer-events-none active:scale-[0.97] select-none",
   {
     variants: {
       variant: {
         primary:
-          "bg-emerald-500 text-white hover:bg-emerald-600 shadow-[0_1px_3px_rgba(16,185,129,0.2)] hover:shadow-[0_8px_24px_rgba(16,185,129,0.35)]",
+          "bg-emerald-500 text-white hover:bg-emerald-600 shadow-[var(--shadow-glow-emerald-soft)] hover:shadow-[var(--shadow-glow-emerald)]",
+        accent:
+          "bg-cyan-500 text-white hover:bg-cyan-600 shadow-[var(--shadow-glow-cyan-soft)] hover:shadow-[var(--shadow-glow-cyan)]",
         secondary:
           "bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700",
         outline:
@@ -25,11 +29,11 @@ const buttonVariants = cva(
           "text-emerald-600 underline-offset-4 hover:underline dark:text-emerald-400",
       },
       size: {
-        sm: "h-9 px-3 text-xs rounded-lg",
+        sm: "h-9 px-3 text-xs",
         md: "h-10 px-4",
-        lg: "h-12 px-6 text-base rounded-xl",
-        xl: "h-14 px-8 text-lg rounded-2xl",
-        icon: "h-10 w-10 rounded-xl",
+        lg: "h-12 px-6 text-base",
+        xl: "h-14 px-8 text-lg",
+        icon: "h-10 w-10",
       },
     },
     defaultVariants: {
@@ -49,7 +53,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, loading, children, disabled, ...props }, ref) => {
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, className }), loading && "overflow-hidden")}
         ref={ref}
         disabled={disabled || loading}
         {...props}

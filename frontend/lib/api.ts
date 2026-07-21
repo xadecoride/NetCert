@@ -67,7 +67,6 @@ export const authApi = {
     request<{
       user: any;
       access_token: string;
-      refresh_token: string;
       expires_in: number;
     }>("/auth/register", { method: "POST", body: data }),
 
@@ -75,7 +74,6 @@ export const authApi = {
     request<{
       user: any;
       access_token: string;
-      refresh_token: string;
       expires_in: number;
     }>("/auth/login", { method: "POST", body: data }),
 

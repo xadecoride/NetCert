@@ -274,10 +274,10 @@ export default function ExamSessionPage() {
 
   if (!attempt) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white px-4">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 px-4">
         <div className="max-w-lg text-center">
           <BookOpen className="h-16 w-16 mx-auto mb-6 text-emerald-500" weight="light" />
-          <h1 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900 dark:text-white">
+          <h1 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900 dark:text-zinc-100">
             {exam?.name || t("exam.examLabel")}
           </h1>
           <p className="text-zinc-400 mb-2 font-mono text-sm">{exam?.code}</p>

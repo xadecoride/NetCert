@@ -300,7 +300,7 @@ function LabDetailPageContent() {
       <PageShell className="min-h-[100dvh]">
         <div className="text-center py-24">
           <Warning className="h-16 w-16 mx-auto mb-4 text-zinc-300 dark:text-zinc-600" weight="light" />
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">{t("labs.noLabs")}</h2>
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">{t("labs.noLabs")}</h2>
           <p className="text-zinc-500 dark:text-zinc-400 mb-6">{error || t("labs.noLabsDesc")}</p>
           <div className="flex items-center justify-center gap-3">
             <Link href="/labs">
@@ -398,7 +398,7 @@ function LabDetailPageContent() {
             </BentoCard>
 
             <div ref={tasksRef} className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
                 <ListChecks className="h-5 w-5 text-emerald-500" weight="fill" />
                 {t("quickLab.tasks")} ({tasks.length})
               </h2>

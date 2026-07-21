@@ -66,6 +66,16 @@ export const cardHover = {
   },
 };
 
+// Cyan-glow variant for secondary-accent surfaces.
+export const accentCardHover = {
+  rest: { y: 0, boxShadow: "0 20px 40px -15px rgba(0,0,0,0.05)" },
+  hover: {
+    y: -4,
+    boxShadow: "0 30px 60px -20px rgba(6,182,212,0.18)",
+    transition: springSnappy,
+  },
+};
+
 export const pulseLoop = {
   scale: [1, 1.05, 1],
   opacity: [0.7, 1, 0.7],

@@ -105,7 +105,7 @@ function ReviewListPageContent() {
           ].map((s) => (
             <motion.div key={s.label} variants={fadeInUp}>
               <BentoCard className="text-center">
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white">
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
                   <AnimatedCounter value={s.value} suffix={s.suffix} />
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">{s.label}</p>
@@ -124,7 +124,7 @@ function ReviewListPageContent() {
           <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 inline-flex mb-4">
             <Exam className="h-10 w-10 text-zinc-400" weight="light" />
           </div>
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-1">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
             No attempts yet
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 max-w-xs mx-auto">

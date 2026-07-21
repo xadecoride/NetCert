@@ -53,7 +53,7 @@ export default function LabTopologyDemo() {
             <Code className="h-3 w-3 mr-1" weight="fill" />
             Lab Workspace Preview
           </Badge>
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter text-zinc-900 dark:text-white">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
             Interactive Topology Demo
           </h1>
           <p className="mt-2 text-zinc-500 dark:text-zinc-400 max-w-2xl">

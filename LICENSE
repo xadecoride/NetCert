@@ -1,0 +1,29 @@
+GNU AFFERO GENERAL PUBLIC LICENSE
+Version 3, 19 November 2007
+
+Copyright (C) 2026 NetCert Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+AGPL-3.0 was chosen for NetCert because:
+
+1. It ensures that improvements to the platform (including network-accessible
+   modifications, e.g. a hosted instance) must contribute back to the community.
+2. It aligns with the "free forever" commitment — no one can take the code
+   private, close the platform, and charge for it without contributing changes.
+3. It protects against SaaS-ification without reciprocity.
+
+For questions about licensing, open an issue or contact the maintainers.

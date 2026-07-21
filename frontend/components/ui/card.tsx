@@ -1,12 +1,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => (
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  interactive?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, interactive, ...props }, ref) => (
     <div
       ref={ref}
       className={cn(
         "rounded-2xl border border-zinc-200 bg-white shadow-diffuse dark:border-zinc-800 dark:bg-zinc-900",
+        interactive &&
+          "transition-all duration-300 cursor-pointer hover:-translate-y-1 hover:shadow-diffuse-lg",
         className
       )}
       {...props}
@@ -54,10 +60,7 @@ const GlassCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivE
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(
-        "glass-card",
-        className
-      )}
+      className={cn("glass-card", className)}
       {...props}
     />
   )
@@ -68,10 +71,7 @@ const BentoCard = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivE
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(
-        "bento-card",
-        className
-      )}
+      className={cn("bento-card", className)}
       {...props}
     />
   )

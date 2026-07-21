@@ -241,7 +241,7 @@ function ReviewDetailPageContent() {
       <PageShell className="min-h-[100dvh]">
         <div className="text-center py-24">
           <Warning className="h-16 w-16 mx-auto mb-4 text-zinc-300 dark:text-zinc-600" weight="light" />
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-2">
+          <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
             {t("review.notFound")}
           </h2>
           <p className="text-zinc-500 dark:text-zinc-400 mb-6">{error || t("review.notFoundDesc")}</p>
@@ -290,25 +290,25 @@ function ReviewDetailPageContent() {
       <SectionReveal>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <BentoCard className="text-center">
-            <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+            <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               <AnimatedCounter value={score} suffix="%" />
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("exam.toPass")?.replace(" to pass", "")}</p>
           </BentoCard>
           <BentoCard className="text-center">
-            <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+            <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               <AnimatedCounter value={attempt.questions_correct || 0} />
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("review.correct")}</p>
           </BentoCard>
           <BentoCard className="text-center">
-            <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+            <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               <AnimatedCounter value={attempt.questions_answered || 0} />
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("review.answered")}</p>
           </BentoCard>
           <BentoCard className="text-center">
-            <p className="text-3xl font-bold text-zinc-900 dark:text-white">
+            <p className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
               {formatDuration(attempt.duration_seconds)}
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">{t("review.duration")}</p>
@@ -318,7 +318,7 @@ function ReviewDetailPageContent() {
 
       <SectionReveal>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             {t("review.questionReview")}
           </h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">

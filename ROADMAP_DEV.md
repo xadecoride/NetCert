@@ -20,43 +20,45 @@
 
 > Цель: закрыть 5 критических дыр из `AUDIT_TECHNICAL.md` §1. Без этого выкладывать инстанс в сеть нельзя.
 
-### 0.1 IDOR на лаб-сабмишенах
-- [ ] `backend/internal/usecase/lab_usecase.go:522,527` — `GetSubmission(ctx, id)` и `GetScores(ctx, submissionID)` **не принимают `userID`** и не проверяют владельца (в отличие от `StopLab:282`, `PauseLab:318`, где `if sub.UserID != userID` есть).
-- [ ] Решение: добавить `userID uuid.UUID` в сигнатуры usecase-методов → пробросить из handler через `middleware.GetUserID(ctx)` → проверка `sub.UserID != userID` → `domain.ErrForbidden`.
-- [ ] Обновить сигнатуры `LabRepository` interface, если требуется.
-- [ ] Юнит-тест: чужой сабмишен → 403.
+### 0.1 IDOR на лаб-сабмишенах ✅
+- [x] `backend/internal/usecase/lab_usecase.go` — `GetSubmission` и `GetScores` теперь принимают `userID` и проверяют `sub.UserID != userID` → `domain.ErrForbidden`. Сигнатуры handler'а пробрасывают `middleware.GetUserID(ctx)`.
+- [x] `backend/internal/delivery/http/lab_handler.go` — маппинг `ErrForbidden → 403`, `ErrNotFound → 404`.
+- [ ] Юнит-тест: чужой сабмишен → 403 (в очереди Фаза 1.4).
 
-### 0.2 `StopLab` — missing `return` ✅ УЖЕ ИСПРАВЛЕНО
-- [x] В текущем коде `lab_handler.go:126` `return` присутствует. Пункт закрыт без действий (audit относился к более старой версии).
+### 0.2 `StopLab` — missing `return` ✅ УЖЕ ИСПРАВЛЕНО В КОДЕ
+- [x] В текущем коде `lab_handler.go` `return` присутствует. Пункт закрыт без действий.
 
-### 0.3 WebSocket-shell без auth
-- [x] `backend/internal/delivery/http/router.go:57` — вынести `r.Route("/ws", ...)` **под** `authMw.Authenticate`.
-- [x] Поддержать токен в WS-handshake: query-param `?token=` (читать в upgrader) — WS-клиенты не могут послать `Authorization`-хедер на нативном `new WebSocket()`.
-- [x] Проверка владельца сабмишена для `/ws/lab/{id}`.
+### 0.3 WebSocket-shell без auth ✅
+- [x] `backend/internal/middleware/auth.go` — добавлен `AuthenticateWS` (читает `Authorization: Bearer` или `?token=` query-param).
+- [x] `backend/internal/delivery/http/router.go` — `/ws` вынесен в `r.Group(r.Use(authMw.AuthenticateWS))`. Публичный shell закрыт.
+- [x] `frontend/components/lab/LabWorkspace.tsx` — `wsUrl` теперь добавляет `?token=`.
+- [ ] Проверка владельца сабмишена в `ws/ssh_proxy.go` `handleTerminal` — пока проверяется только auth, не ownership (в очереди).
 
-### 0.4 Декоративные `validate:` теги
-- [x] Добавить `github.com/go-playground/validator/v10`.
-- [x] Вызвать `validate.Struct(req)` в `auth_handler.go` (Register, UpdateProfile, UpdateEmail, UpdatePreferences).
-- [x] Маппинг `validator.ValidationErrors` → `400` с человекочитаемым сообщением.
+### 0.4 Декоративные `validate:` теги ✅
+- [x] Добавлена зависимость `github.com/go-playground/validator/v10 v10.26.0` в `go.mod`.
+- [x] Создан `backend/internal/pkg/validator/validator.go` — обёртка с читаемым форматом ошибок и интеграцией с `domain.ErrValidation`.
+- [x] Вызовы `validator.Struct(req)` добавлены в `Register`, `Login`, `UpdateEmail` (`auth_handler.go`).
 
-### 0.5 Refresh-токены без endpoint
-- [x] Решение (быстрый путь): убрать `refresh_token` из ответа `/auth/login` + убрать поле из клиента. Доступ-токен с TTL 15 мин достаточен для MVP.
+### 0.5 Refresh-токены без endpoint ✅
+- [x] Убрано поле `RefreshToken` из `domain.AuthResponse` (и удалён `TokenPair`).
+- [x] `auth_usecase.go` — `Register` и `Login` больше не генерируют refresh-токен.
+- [x] Frontend (`auth-context.tsx`, `api.ts`) — удалено сохранение/чтение `refresh_token` из localStorage.
 - [ ] (Отложено, Фаза 1) Полноценная реализация `/auth/refresh` с rotation + Redis-блэклист.
 
 ---
 
 ## ФАЗА 1 — Фундамент качества (P1, ~1–2 недели)
 
-### 1.1 Гигиена репозитория
+### 1.1 Гигиена репозитория ✅
 - [x] `git rm --cached backend/server` + добавить `backend/server`, `backend/bin/` в `.gitignore`.
-- [x] `.gitignore`: починить правило для `session_*.zip` (сейчас матчит другое имя) + добавить `session_extract/`, `skills-lock.json`, `/test_ws.go` (или удалить эти артефакты).
+- [x] `.gitignore`: починить правило для `session_*.zip` (теперь матчит `session_*.zip`) + добавить `session_extract/`, `skills-lock.json`, `/test_ws.go` (или удалить эти артефакты).
 - [ ] (опц.) `git filter-repo` для очистки истории от 34 MB бинарника и 75 MB archive — когда не страшно переписать историю.
 
-### 1.2 CI/CD
-- [x] `.github/workflows/ci.yml`: matrix — backend (`go build`, `go vet`, `gosec` опц., `go test ./...`), frontend (`npm ci`, `npm run lint`, `npm run build`).
+### 1.2 CI/CD ✅
+- [x] `.github/workflows/ci.yml`: matrix — backend (`go build`, `go vet`, `go test ./...`), frontend (`npm ci`, `npm run lint`, `npm run build`).
 - [x] Кэширование `~/go/pkg/mod` и `~/.npm`.
 
-### 1.3 Линтинг / форматирование
+### 1.3 Линтинг / форматирование ✅
 - [x] Backend: `.golangci.yaml` (govet, errcheck, staticcheck, gosec, revive, goimports).
 - [x] Frontend: `eslint.config.js` (next/core-web-vitals + @typescript-eslint).
 - [x] `.pre-commit-config.yaml`: gofmt, go-vet, golangci-lint, eslint, end-of-file-fixer.
@@ -68,7 +70,7 @@
 - [ ] Frontend: Vitest + React Testing Library на критичные хуки (useAuth, useApi).
 
 ### 1.5 Обработка ошибок
-- [ ] Типизированные доменные ошибки (`domain/errors.go`: `ErrNotFound`, `ErrForbidden`, `ErrConflict`…).
+- [x] Типизированные доменные ошибки (`domain/errors.go`: `ErrNotFound`, `ErrForbidden`, `ErrConflict`, `ErrValidation`).
 - [ ] Единый маппер `domain error → HTTP code` в middleware/handler. Убрать сырой `err.Error()` из ответов (lab_handler, exam_handler).
 
 ### 1.6 Контент вне git
@@ -124,11 +126,11 @@
 
 ## ФАЗА 4 — Бизнес / OSS-зрелость (P2)
 
-### 4.1 Лицензия и сообщество
-- [ ] **Добавить LICENSE** — рекомендация AGPL-3.0 (сильнее защищает free-модель от закрытого риза) или MIT (максимальный adoption).
-- [ ] `CONTRIBUTING.md` (как добавлять вопросы, как запускать лабы, стиль кода).
-- [ ] `CODE_OF_CONDUCT.md` (Contributor Covenant).
-- [ ] `.github/ISSUE_TEMPLATE/`, `.github/PULL_REQUEST_TEMPLATE.md`.
+### 4.1 Лицензия и сообщество ✅
+- [x] **Добавить LICENSE** — рекомендация AGPL-3.0 (сильнее защищает free-модель от закрытого риза) или MIT (максимальный adoption).
+- [x] `CONTRIBUTING.md` (как добавлять вопросы, как запускать лабы, стиль кода).
+- [x] `CODE_OF_CONDUCT.md` (Contributor Covenant).
+- [x] `.github/ISSUE_TEMPLATE/` (bug + feature), `.github/PULL_REQUEST_TEMPLATE.md`.
 - [ ] README-бейджи: CI status, license, Telegram-чат.
 - [ ] Открыть канал сообщества (Telegram-группа — естественно для RU-сегмента).
 - [ ] Conventional Commits + CHANGELOG.md.

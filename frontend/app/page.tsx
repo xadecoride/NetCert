@@ -179,7 +179,7 @@ export default function LandingPage() {
                 <Network className="h-3 w-3" weight="fill" />
                 {t("landing.badge")}
               </Badge>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter leading-[0.9] text-zinc-900 dark:text-white">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter leading-[0.9] text-zinc-900 dark:text-zinc-100">
                 {t("landing.title")}
                 <span className="block mt-1 text-emerald-600 dark:text-emerald-400">
                   {t("landing.titleAccent")}
@@ -244,7 +244,7 @@ export default function LandingPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionReveal className="mb-16">
             <Badge variant="secondary" className="mb-4">{t("landing.features")}</Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
               {t("landing.featuresTitle")}
             </h2>
             <p className="mt-3 text-lg text-zinc-500 dark:text-zinc-400 max-w-xl">
@@ -302,7 +302,7 @@ export default function LandingPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionReveal className="mb-16 max-w-xl">
             <Badge variant="secondary" className="mb-4">{t("landing.statsTitle")}</Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
               {t("landing.statsTitle")}
             </h2>
             <p className="mt-3 text-lg text-zinc-500 dark:text-zinc-400">
@@ -323,7 +323,7 @@ export default function LandingPage() {
                   className="bento-card"
                 >
                   <Icon className="h-6 w-6 text-emerald-500 mb-4" weight="duotone" />
-                  <div className="text-4xl lg:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white">
+                  <div className="text-4xl lg:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
                     <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                   </div>
                   <div className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -341,7 +341,7 @@ export default function LandingPage() {
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionReveal className="mb-16">
             <Badge variant="secondary" className="mb-4">{t("landing.tracks")}</Badge>
-            <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
               {t("landing.tracksTitle")}
             </h2>
             <p className="mt-3 text-lg text-zinc-500 dark:text-zinc-400 max-w-xl">

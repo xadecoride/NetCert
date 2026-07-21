@@ -1,0 +1,38 @@
+run:
+  timeout: 3m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # unchecked errors
+    - govet         # go vet
+    - staticcheck   # advanced static analysis
+    - gosec         # security issues
+    - revive        # replacement for golint
+    - goimports     # import ordering
+    - ineffassign   # ineffectual assignments
+    - unused        # unused variables/imports
+    - gocritic      # opinionated linter
+
+linters-settings:
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - disable-general-rule
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: context-as-argument
+      - name: context-return-type
+
+  goimports:
+    local-prefixes: github.com/netcert/backend
+
+issues:
+  exclude-rules:
+    # Allow underscore in tests
+    - path: _test\.go
+      linters:
+        - errcheck
+  max-issues-per-linter: 50
+  max-same-issues: 5

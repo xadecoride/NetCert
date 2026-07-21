@@ -235,7 +235,7 @@ function ExamsPage() {
           <div className="p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mb-4">
             <BookOpen className="h-10 w-10 text-zinc-400" weight="light" />
           </div>
-          <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-1">
+          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
             No exams found
           </h3>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mb-6">

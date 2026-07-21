@@ -416,7 +416,7 @@ export default function SettingsPage() {
                   </span>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-zinc-900 dark:text-white truncate">
+                  <p className="font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                     {user?.display_name || "User"}
                   </p>
                   <p className="text-sm text-zinc-500 truncate">{user?.email || "user@example.com"}</p>

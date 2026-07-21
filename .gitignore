@@ -1,5 +1,6 @@
 # Go
 backend/bin/
+backend/server
 backend/tmp/
 *.exe
 *.exe~
@@ -42,7 +43,16 @@ redis-data/
 *.seed
 *.pid.lock
 coverage/
-session_f28aaef8-eed9-4556-b354-77ead82c3cd1.zip
+
+# AI sessions & tooling artifacts
+session_*.zip
+session_extract/
+skills-lock.json
+
+# Stray test files at repo root
+/test_ws.go
+
+# Planning docs (kept private)
 PLAN.md
 CLAUDE.md
 AUDIT_REPORT.md

@@ -34,7 +34,7 @@ export function ExamResults({
   const passed = score >= passingScore;
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-white">
+    <div className="min-h-[100dvh] flex items-center justify-center px-4 bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
       <div className="max-w-md text-center">
         <motion.div
           initial={{ scale: 0 }}
@@ -53,11 +53,11 @@ export function ExamResults({
             )}
           </div>
         </motion.div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900 dark:text-white">
+        <h1 className="text-3xl font-bold tracking-tight mb-2 text-zinc-900 dark:text-zinc-100">
           {passed ? congratulations : keepPracticing}
         </h1>
         <p className="text-zinc-500 dark:text-zinc-400 mb-6">{passed ? youPassed : youFailed}</p>
-        <div className="text-6xl font-bold tracking-tighter mb-2 text-zinc-900 dark:text-white">
+        <div className="text-6xl font-bold tracking-tighter mb-2 text-zinc-900 dark:text-zinc-100">
           {Math.round(score)}%
         </div>
         <p className="text-zinc-500 dark:text-zinc-500 mb-8">

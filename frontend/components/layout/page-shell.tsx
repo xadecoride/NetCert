@@ -7,16 +7,22 @@ import { staggerContainer, fadeInUp } from "@/lib/motion";
 export function PageShell({
   children,
   className,
+  bare = false,
 }: {
   children: React.ReactNode;
   className?: string;
+  bare?: boolean;
 }) {
   return (
     <motion.div
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
-      className={cn("max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8", className)}
+      className={cn(
+        "container-page px-4 sm:px-6 lg:px-8",
+        bare ? "" : "py-8 pb-24 md:pb-8",
+        className
+      )}
     >
       {children}
     </motion.div>
@@ -39,7 +45,7 @@ export function PageHeader({
   return (
     <motion.div variants={fadeInUp} className={cn("mb-8 md:mb-10", className)}>
       {badge && <div className="mb-3">{badge}</div>}
-      <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-white">
+      <h1 className="text-3xl md:text-5xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
         {title}
       </h1>
       {subtitle && (
