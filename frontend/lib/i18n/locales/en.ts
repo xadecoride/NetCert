@@ -36,19 +36,19 @@ export const en = {
     featuresSubtitle: "Every tool you need to pass your certification exams",
     adaptiveTesting: "Adaptive Testing",
     adaptiveTestingDesc:
-      "AI-powered exam simulations that adapt to your skill level with spaced repetition (FSRS). Questions are dynamically selected based on your performance history.",
-    questionsCount: "1,200+ original questions",
+      "Exam simulations with detailed per-question analytics, flagging, and timed practice modes. Question selection improves over time as your attempt history grows.",
+    questionsCount: "9,150+ original questions",
     detailedAnalytics: "Detailed Analytics",
     detailedAnalyticsDesc:
-      "Knowledge radar charts, weakness heatmaps, and predictive readiness scoring.",
+      "Track exam history, average scores, and per-track study progress with clear trends and readiness signals.",
     metricsCount: "15+ performance metrics",
     labs: "JNCIE/CCIE Labs",
     labsDesc:
-      "Interactive 8-hour practical labs with Containerlab, auto-grading, and scoring sheets. Full-scale network topologies with real Junos and IOS-XR devices.",
+      "Interactive practical labs with Containerlab, auto-grading, and scoring sheets. Network topologies with real Junos and IOS-XR devices.",
     labsCount: "5 lab tracks",
     ctaTitle: "Ready to get certified?",
     ctaSubtitle:
-      "Join thousands of network engineers preparing for their Juniper and Cisco certifications.",
+      "Self-hostable, open-source, and free forever. Start your Juniper or Cisco certification journey today.",
     browseExams: "Browse Exams",
     footer:
       "NetCert — Certification Preparation Platform. Not affiliated with Juniper Networks or Cisco Systems.",
@@ -58,9 +58,11 @@ export const en = {
     statsQuestions: "Questions",
     statsLabs: "Labs",
     statsTracks: "Tracks",
-    statsUsers: "Active learners",
     statsMetrics: "Metrics",
+    statsSelfHosted: "Self-hostable",
 
+    trackAvailable: "Available now",
+    trackRoadmap: "Roadmap",
     trackEnt: "Enterprise Routing & Switching",
     trackEntDesc: "Core enterprise networking with Junos OS",
     trackSp: "Service Provider",

@@ -46,7 +46,7 @@ export function Header() {
   ];
 
   // On landing and exam routes we render a minimal chrome (logo + auth only).
-  const isMinimal = pathname === "/" || pathname?.startsWith("/exam/");
+  const isMinimal = pathname === "/" || pathname?.startsWith("/exams/");
 
   const toggleTheme = () => setTheme(currentTheme === "dark" ? "light" : "dark");
   const toggleLocale = () => setLocale(locale === "en" ? "ru" : "en");

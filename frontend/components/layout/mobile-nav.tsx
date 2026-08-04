@@ -24,7 +24,7 @@ export function MobileNav() {
     { href: "/settings", label: t("nav.settings"), icon: Gear },
   ];
 
-  if (pathname === "/" || pathname?.startsWith("/exam/")) return null;
+  if (pathname === "/" || pathname?.startsWith("/exams/")) return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[var(--z-overlay)] border-t border-zinc-200 bg-white/90 backdrop-blur-xl backdrop-saturate-150 dark:border-zinc-800 dark:bg-zinc-950/90 md:hidden">

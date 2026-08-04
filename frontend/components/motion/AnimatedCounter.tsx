@@ -25,10 +25,11 @@ export function AnimatedCounter({
     duration: duration * 1000,
   });
   const isInView = useInView(ref, { once: true, margin: "-50px" });
-  const [display, setDisplay] = useState("0");
+  const [display, setDisplay] = useState<string | null>(null);
 
   const safeValue = Number.isFinite(value) ? value : 0;
 
+  // Kick off the spring animation once the element enters the viewport.
   useEffect(() => {
     if (isInView) {
       motionValue.set(safeValue);
@@ -43,10 +44,16 @@ export function AnimatedCounter({
     return unsubscribe;
   }, [springValue]);
 
+  // SSR + before in-view: render the final value directly so the first paint
+  // shows the real number (e.g. "9,150+") instead of a misleading "0+".
+  // Once the spring starts firing changes, `display` takes over with the
+  // animated count-up. See CLAUDE.md §7.8 / landing redesign.
+  const shown = display ?? Math.round(safeValue).toLocaleString();
+
   return (
     <span ref={ref} className={cn(className)}>
       {prefix}
-      {display}
+      {shown}
       {suffix}
     </span>
   );
