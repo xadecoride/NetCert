@@ -4,44 +4,82 @@ A free, open-source platform for preparing for **Juniper (JNCIA → JNCIE)** and
 
 ---
 
-## Quick Start
+## Quick Start (Native — No Docker Required)
 
 ### Prerequisites
 
-| Tool | Version | Install |
-|------|---------|---------|
-| **Docker** | 24+ | [docker.com](https://docs.docker.com/get-docker/) |
-| **Docker Compose** | v2 (plugin) | Included with Docker Desktop / `apt install docker-compose-plugin` |
-| **Go** | 1.22+ | [go.dev](https://go.dev/doc/install) |
-| **Node.js** | 22+ | [nodejs.org](https://nodejs.org/) |
-| **Make** | any | `apt install make` / `brew install make` |
+| Tool | Version | Install (Fedora/RHEL) | Install (Ubuntu/Debian) |
+|------|---------|----------------------|------------------------|
+| **Go** | 1.22+ | `dnf install golang` | `apt install golang` |
+| **Node.js** | 22+ | `dnf install nodejs` | `apt install nodejs` |
+| **PostgreSQL** | 16+ | `dnf install postgresql-server postgresql-contrib` | `apt install postgresql postgresql-contrib` |
+| **Redis** | 7+ | `dnf install redis` | `apt install redis` |
 
-> **No Docker?** See [Alternative: Run services separately](#alternative-run-services-separately) below.
+> **This project runs natively without Docker.** Docker is only needed for Containerlab (JNCIE/CCIE labs) — not for the main app.
 
 ---
 
-### 1. Clone the repository
+### 1. Clone & Configure
 
 ```bash
 git clone <repo-url>
 cd NetCert
+
+# Backend config
+cd backend
+cp .env.example .env
+# .env already has correct values for local Postgres/Redis (127.0.0.1:5432, 127.0.0.1:6379)
+```
+
+### 2. Setup Database (one-time)
+
+```bash
+# Fedora/RHEL:
+sudo postgresql-setup --initdb
+sudo systemctl enable --now postgresql redis
+
+# Ubuntu/Debian:
+# sudo systemctl enable --now postgresql redis
+
+# Create DB user & database
+sudo -u postgres psql -c "CREATE USER netcert WITH PASSWORD 'netcert';"
+sudo -u postgres psql -c "CREATE DATABASE netcert OWNER netcert;"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE netcert TO netcert;"
+sudo -u postgres psql -d netcert -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+```
+
+### 3. Run Migrations
+
+```bash
+cd /home/lecoo/NetCert/backend
+go install github.com/pressly/goose/v3/cmd/goose@latest
+export PATH=$PATH:$(go env GOPATH)/bin
+
+# IMPORTANT: Use 127.0.0.1 (not localhost) to force TCP/IP with md5 auth
+goose -dir migrations postgres "postgresql://netcert:netcert@127.0.0.1:5432/netcert?sslmode=disable" up
+```
+
+### 4. Start Services (two terminals)
+
+**Terminal 1 — Backend:**
+```bash
+cd /home/lecoo/NetCert/backend
+go run ./cmd/server/
+# API: http://localhost:8080
+```
+
+**Terminal 2 — Frontend:**
+```bash
+cd /home/lecoo/NetCert/frontend
+npm ci
+npm run dev
+# UI: http://localhost:3000 (or 3001 if 3000 busy)
 ```
 
 ---
 
-### 2. Start everything with Docker Compose (recommended)
+## Access Points
 
-```bash
-# Configure environment
-cp backend/.env.example backend/.env
-
-# Build and start Postgres, Redis, Backend, Frontend
-make up
-```
-
-This builds and starts all services in one command. Migrations are applied automatically before the backend starts.
-
-**Access points:**
 | URL | Description |
 |-----|-------------|
 | `http://localhost:3000` | Landing page |
@@ -51,61 +89,28 @@ This builds and starts all services in one command. Migrations are applied autom
 | `http://localhost:3000/exams` | Exam catalog |
 | `http://localhost:8080/health` | API health check |
 
-**Stop the stack:**
-```bash
-make down
-```
-
----
-
-### Alternative: Run services separately (no Docker Compose)
-
-If you have Postgres/Redis running locally or on a remote host:
-
-```bash
-# 1. Start only infrastructure (Postgres + Redis) — requires Docker
-make dev-infra
-
-# 2. In separate terminals:
-make dev-backend   # http://localhost:8080
-make dev-frontend  # http://localhost:3000
-```
-
-#### Fully local (no Docker at all)
-
-You need a running **PostgreSQL 16** and **Redis 7** instance.
-
-```bash
-# 1. Configure database connection
-cp backend/.env.example backend/.env
-# Edit backend/.env with your POSTGRES_DSN and REDIS_ADDR
-
-# 2. Apply migrations
-cd backend
-go run github.com/pressly/goose/v3/cmd/goose@latest \
-  -dir migrations postgres \
-  "$POSTGRES_DSN" up
-
-# 3. Run backend
-go run ./cmd/server
-
-# 4. In another terminal, run frontend
-cd ../frontend
-npm ci
-npm run dev
-```
-
 ---
 
 ## Useful Commands
 
 ```bash
-make dev-infra      # Start Postgres and Redis only
-make migrate-up     # Apply database migrations
-make dev-backend    # Run Go server on :8080
-make dev-frontend   # Run Next.js dev server on :3000
-make down           # Stop all Docker containers
-make clean          # Stop containers + remove volumes (data loss!)
+# Backend
+cd backend && go run ./cmd/server/
+
+# Frontend
+cd frontend && npm run dev
+
+# Migrations
+cd backend
+export PATH=$PATH:$(go env GOPATH)/bin
+goose -dir migrations postgres "postgresql://netcert:netcert@127.0.0.1:5432/netcert?sslmode=disable" up
+
+# Database management
+sudo systemctl restart postgresql redis
+sudo systemctl status postgresql redis
+
+# Frontend deps
+cd frontend && npm ci
 ```
 
 ---
@@ -114,39 +119,16 @@ make clean          # Stop containers + remove volumes (data loss!)
 
 Question banks are produced from blueprint-aligned content pools and written as `goose` SQL migrations in `backend/migrations/`.
 
-### Generate all supported exams
-
 ```bash
+# All exams
 python3 scripts/generate_quality_questions.py
-```
 
-### Generate a single exam
-
-```bash
+# Single exam
 python3 scripts/generate_quality_questions.py ccna
 python3 scripts/generate_quality_questions.py jncia-junos
 python3 scripts/generate_quality_questions.py jncip-ent
 python3 scripts/generate_quality_questions.py jncip-sp
 ```
-
-### Apply migrations locally
-
-```bash
-# Start PostgreSQL (Docker example)
-docker run -d --name netcert-test-pg \
-  -e POSTGRES_USER=netcert \
-  -e POSTGRES_PASSWORD=netcert \
-  -e POSTGRES_DB=netcert \
-  -p 5432:5432 postgres:16
-
-# Apply migrations
-cd backend
-go run github.com/pressly/goose/v3/cmd/goose@latest \
-  -dir migrations postgres \
-  'postgresql://netcert:netcert@localhost:5432/netcert' up
-```
-
-See `AGENTS.md` for detailed instructions on adding new content and validating output.
 
 ---
 
@@ -169,9 +151,9 @@ NetCert/
 │   ├── app/                    # App Router pages
 │   ├── components/             # UI components
 │   └── lib/                    # API client, context, utilities
-├── infra/                      # Docker infrastructure
-│   └── docker-compose.yml
 ├── scripts/                    # Question generators, audits
+├── infra/                      # Docker infrastructure (for Containerlab only)
+│   └── docker-compose.yml
 └── CLAUDE.md                   # Project source of truth for AI agents
 ```
 
@@ -201,8 +183,7 @@ NetCert/
 **Infrastructure**
 - PostgreSQL 16
 - Redis 7
-- Docker Compose
-- Containerlab v0.75 (for JNCIE/CCIE labs)
+- Containerlab v0.75 (for JNCIE/CCIE labs — requires Docker)
 
 ---
 
@@ -230,39 +211,19 @@ NetCert/
 
 ---
 
-## Sample Content
-
-Seed data includes starter questions for:
-- **JNCIA-Junos (JN0-106)** — Junos OS, CLI, OSPF, BGP, firewall filters, static routing, interfaces
-- **JNCIP-ENT (JN0-649)** — BGP, EVPN, IS-IS, MPLS, multicast
-- **JNCIP-SP (JN0-663)** — MPLS, BGP-LU, LDP, RSVP, Inter-AS
-- **CCNA (200-301)** — OSPF AD, VLAN ranges, RIP, wireless basics
-
----
-
 ## Troubleshooting
 
-### `make: docker: No such file or directory`
-Docker is not installed. Install it:
-- **Ubuntu/Debian:** `sudo apt update && sudo apt install docker.io docker-compose-plugin`
-- **Fedora:** `sudo dnf install docker docker-compose`
-- **Arch:** `sudo pacman -S docker docker-compose`
-- **macOS:** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- **Windows:** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) with WSL2 backend
-
-Then run `make up` again.
+### Database connection failed
+- Check `backend/.env` has `DATABASE_DSN=postgres://netcert:***@127.0.0.1:5432/netcert?sslmode=disable`
+- **Use `127.0.0.1` not `localhost`** — forces TCP/IP with md5 auth
+- Ensure Postgres is running: `systemctl status postgresql`
+- Ensure `uuid-ossp` extension exists: `sudo -u postgres psql -d netcert -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"`
 
 ### Port already in use (3000 or 8080)
 ```bash
-# Find and kill the process
 lsof -ti:3000 | xargs kill -9
 lsof -ti:8080 | xargs kill -9
 ```
-
-### Database connection failed
-- Check `backend/.env` has correct `POSTGRES_DSN`
-- Ensure Postgres is running: `docker ps | grep postgres`
-- Run migrations manually: `make migrate-up`
 
 ### Frontend build fails
 ```bash
@@ -271,6 +232,10 @@ rm -rf node_modules .next package-lock.json
 npm ci
 npm run build
 ```
+
+### PostgreSQL: `Ident authentication failed`
+- You used `localhost` in DSN — change to `127.0.0.1`
+- Or edit `/var/lib/pgsql/data/pg_hba.conf`: change `local all all peer` → `local all all trust`, then `systemctl restart postgresql`
 
 ---
 

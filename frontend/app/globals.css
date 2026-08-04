@@ -53,6 +53,11 @@
   /* Fonts */
   --font-family-sans: 'Geist', system-ui, -apple-system, sans-serif;
   --font-family-mono: 'Geist Mono', 'JetBrains Mono', 'Fira Code', monospace;
+  --font-family-display: 'Geist', 'Space Grotesk', system-ui, sans-serif;
+
+  /* Display typography */
+  --text-display-xl: clamp(3.5rem, 8vw, 7rem);
+  --text-display-lg: clamp(2.5rem, 5vw, 4.5rem);
 
   /* Radius scale */
   --radius-sm: 0.375rem;

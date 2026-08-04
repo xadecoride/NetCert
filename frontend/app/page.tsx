@@ -9,6 +9,7 @@ import { SectionReveal } from "@/components/motion/SectionReveal";
 import { KineticMarquee } from "@/components/motion/KineticMarquee";
 import { AnimatedCounter } from "@/components/motion/AnimatedCounter";
 import { NetworkTopology } from "@/components/landing/network-topology";
+import { HeroTopology } from "@/components/landing/HeroTopology";
 import { useTranslation } from "@/lib/i18n/context";
 import { springTransition } from "@/lib/motion";
 import {
@@ -173,12 +174,25 @@ export default function LandingPage() {
     <div className="min-h-[100dvh]">
       {/* ─── Hero ─── */}
       <section className="relative overflow-hidden border-b border-zinc-200 dark:border-zinc-800">
+        {/* Base gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-zinc-50 dark:from-zinc-950 dark:via-zinc-950 dark:to-zinc-900" />
-        <div className="absolute top-0 right-0 w-full lg:w-1/2 h-full bg-gradient-to-l from-emerald-100/40 dark:from-emerald-900/10" />
-        {/* soft accent glow behind hero */}
-        <div className="pointer-events-none absolute -top-24 -right-24 h-[28rem] w-[28rem] rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/10" />
-        <div className="pointer-events-none absolute -bottom-32 -left-32 h-[24rem] w-[24rem] rounded-full bg-cyan-400/10 blur-3xl dark:bg-cyan-500/10" />
-
+        
+        {/* Mesh gradients — 3 large blobs for depth */}
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-emerald-400/10 blur-3xl dark:bg-emerald-500/10" />
+        <div className="absolute -bottom-60 -left-60 w-[400px] h-[400px] rounded-full bg-cyan-400/10 blur-3xl dark:bg-cyan-500/10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-emerald-300/5 blur-3xl dark:bg-emerald-600/5" />
+        
+        {/* Subtle vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/10 to-transparent dark:from-zinc-900/20 pointer-events-none" />
+        
+        {/* Noise overlay */}
+                <div 
+                  className="absolute inset-0 opacity-[0.015] pointer-events-none" 
+                  style={{ 
+                    backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' 
+                  }} 
+                />
+        
         <div className="relative max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center min-h-[calc(100dvh-4rem)] py-20 lg:py-0 gap-12 lg:gap-8">
             {/* Left: Content */}
@@ -192,7 +206,7 @@ export default function LandingPage() {
                 <Network className="h-3 w-3" weight="fill" />
                 {t("landing.badge")}
               </Badge>
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold tracking-tighter leading-[0.9] text-zinc-900 dark:text-zinc-100">
+              <h1 className="font-[var(--font-family-display)] text-display-xl font-bold tracking-tighter leading-[0.95] text-zinc-900 dark:text-zinc-100">
                 {t("landing.title")}
                 <span className="block mt-1 text-emerald-600 dark:text-emerald-400">
                   {t("landing.titleAccent")}
@@ -242,7 +256,7 @@ export default function LandingPage() {
             >
               <div className="relative w-full max-w-lg aspect-square">
                 <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-emerald-100/50 to-zinc-100/50 dark:from-emerald-900/10 dark:to-zinc-900/30 border border-zinc-200 dark:border-zinc-800 shadow-[var(--shadow-glow-emerald-soft)]" />
-                <NetworkTopology className="relative p-6 lg:p-8" />
+                <HeroTopology className="relative p-6 lg:p-8" />
                 {/* floating stat chips overlay */}
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
@@ -294,12 +308,16 @@ export default function LandingPage() {
               return (
                 <motion.div
                   key={feature.titleKey}
+                  className="group relative"
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ ...springTransition, delay: index * 0.1 }}
                 >
-                  <BentoCard className="group h-full flex flex-col">
+                  {/* Accent border that animates on hover */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  
+                  <BentoCard className="relative h-full flex flex-col z-10 group-hover:-translate-y-1 transition-transform duration-300">
                     <div className={`p-4 rounded-2xl ${c.bg} ${c.glow} w-fit mb-5 transition-transform duration-300 group-hover:scale-110`}>
                       <Icon className={`h-8 w-8 ${c.text}`} weight="duotone" />
                     </div>
@@ -341,7 +359,29 @@ export default function LandingPage() {
           </SectionReveal>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {stats.map((stat, index) => {
+            {/* Hero stat — Questions (spans 2 cols) */}
+            <motion.div
+              key="statsQuestions"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ ...springTransition, delay: 0 }}
+              className="lg:col-span-2 bento-card relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10" />
+              <div className="relative p-6 lg:p-8">
+                <BookOpen className="h-6 w-6 text-emerald-500 mb-4" weight="duotone" />
+                <div className="text-6xl lg:text-7xl font-bold tracking-tighter text-zinc-900 dark:text-zinc-100">
+                  <AnimatedCounter value={9150} suffix="+" />
+                </div>
+                <div className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                  {t("landing.statsQuestions")}
+                </div>
+              </div>
+            </motion.div>
+            
+            {/* Remaining stats */}
+            {stats.slice(1).map((stat, index) => {
               const Icon = stat.icon;
               return (
                 <motion.div
@@ -349,7 +389,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 24 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ ...springTransition, delay: index * 0.1 }}
+                  transition={{ ...springTransition, delay: (index + 1) * 0.1 }}
                   className="bento-card"
                 >
                   <Icon className="h-6 w-6 text-emerald-500 mb-4" weight="duotone" />
@@ -375,7 +415,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Tracks: Zig-Zag 2-col ─── */}
+      {/* ─── Tracks: Masonry Grid ─── */}
       <section className="py-24 lg:py-32 bg-zinc-50 dark:bg-zinc-950">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionReveal className="mb-16">
@@ -393,16 +433,15 @@ export default function LandingPage() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {tracks.map((track, index) => {
               const Icon = track.icon;
-              const isOffset = index % 2 === 1;
               return (
                 <motion.div
                   key={track.slug}
                   variants={itemVariants}
-                  className={isOffset ? "lg:mt-12" : ""}
+                  className={track.available ? "lg:row-span-2" : ""}
                 >
                   {track.available ? (
                     <Link href={`/exams?track=${track.slug}`}>
@@ -411,7 +450,7 @@ export default function LandingPage() {
                       </BentoCard>
                     </Link>
                   ) : (
-                    <BentoCard className="group h-full flex flex-col opacity-70">
+                    <BentoCard className="group h-full flex flex-col opacity-60">
                       <TrackCardInner track={track} Icon={Icon} t={t} />
                     </BentoCard>
                   )}
@@ -423,44 +462,40 @@ export default function LandingPage() {
       </section>
 
       {/* ─── CTA ─── */}
-      <section className="py-24 lg:py-32 border-t border-zinc-200 dark:border-zinc-800">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-800 p-12 lg:p-16 text-center text-white shadow-[var(--shadow-diffuse-lg)]"
-          >
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 25% 50%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-            </div>
-            {/* cyan accent streak */}
-            <div className="pointer-events-none absolute -top-20 left-1/2 -translate-x-1/2 h-64 w-96 rounded-full bg-cyan-400/20 blur-3xl" />
-            <div className="relative">
-              <Badge variant="secondary" className="mb-5 bg-white/10 text-white border border-white/20">
-                <Sparkle className="h-3 w-3" weight="fill" />
-                AGPL-3.0 · Open Source
-              </Badge>
-              <h2 className="text-4xl sm:text-5xl font-bold tracking-tighter">{t("landing.ctaTitle")}</h2>
-              <p className="mt-4 text-lg text-white/70 max-w-lg mx-auto">
-                {t("landing.ctaSubtitle")}
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-3 mt-10">
-                <Link href="/auth/register">
-                  <Button variant="secondary" size="xl" className="text-base bg-white text-emerald-800 hover:bg-zinc-100 shadow-xl">
-                    {t("landing.getStarted")}
-                  </Button>
-                </Link>
-                <Link href="/exams">
-                  <Button variant="outline" size="xl" className="text-base border-white/20 text-white hover:bg-white/10">
-                    {t("landing.browseExams")}
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
+      <section className="py-24 lg:py-32 border-t border-zinc-200 dark:border-zinc-800 relative">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-20 -right-20 w-[400px] h-[400px] rounded-full bg-emerald-500/15 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 w-[300px] h-[300px] rounded-full bg-cyan-500/15 blur-3xl" />
         </div>
+        
+        <motion.div
+          className="relative z-10 max-w-3xl mx-auto px-6 text-center"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <Badge variant="secondary" className="mb-5 mx-auto bg-white/10 text-white border border-white/20">
+            <Sparkle className="h-3 w-3" weight="fill" /> AGPL-3.0 · Open Source
+          </Badge>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter text-white">
+            {t("landing.ctaTitle")}
+          </h2>
+          <p className="mt-5 text-lg text-white/70 max-w-xl mx-auto">
+            {t("landing.ctaSubtitle")}
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+            <Link href="/auth/register">
+              <Button variant="secondary" size="xl" className="w-full sm:w-auto bg-white text-emerald-800 hover:bg-zinc-100 shadow-[0_0_40px_rgba(255,255,255,0.15)]">
+                {t("landing.getStarted")}
+              </Button>
+            </Link>
+            <Link href="/exams">
+              <Button variant="outline" size="xl" className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
+                {t("landing.browseExams")}
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
       </section>
 
       {/* ─── Footer ─── */}

@@ -17,6 +17,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/netcert/backend/internal/domain"
+	"github.com/netcert/backend/internal/middleware"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -72,7 +73,7 @@ type SSHProxy struct {
 
 // LabUseCaseInterface defines the subset of LabUseCase needed by SSHProxy.
 type LabUseCaseInterface interface {
-	GetSubmission(ctx context.Context, submissionID uuid.UUID) (*domain.LabSubmission, error)
+	GetSubmission(ctx context.Context, submissionID uuid.UUID, userID uuid.UUID) (*domain.LabSubmission, error)
 }
 
 // NewSSHProxy creates a new SSH proxy.
@@ -117,7 +118,8 @@ func (p *SSHProxy) handleTerminal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sub, err := p.labUC.GetSubmission(r.Context(), subID)
+	userID := middleware.GetUserID(r.Context())
+	sub, err := p.labUC.GetSubmission(r.Context(), subID, userID)
 	if err != nil || sub == nil {
 		slog.Error("Submission not found", slog.String("submission_id", submissionID))
 		writeWS(conn, "ERROR: Lab session not found")
@@ -317,7 +319,8 @@ func (p *SSHProxy) handleTopologyUpdates(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	sub, err := p.labUC.GetSubmission(r.Context(), subID)
+	userID := middleware.GetUserID(r.Context())
+	sub, err := p.labUC.GetSubmission(r.Context(), subID, userID)
 	if err != nil || sub == nil {
 		writeWS(conn, `{"error":"submission not found"}`)
 		return
