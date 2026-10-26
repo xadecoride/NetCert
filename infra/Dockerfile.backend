@@ -8,10 +8,11 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/server ./cmd/server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/server ./cmd/server
 
-# Install goose migration tool
-RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+# Build the goose migration CLI from the version pinned in go.mod
+# (avoids pulling a newer goose that may require a newer Go toolchain)
+RUN go build -o /go/bin/goose github.com/pressly/goose/v3/cmd/goose
 
 FROM alpine:3.19
 

@@ -4,7 +4,41 @@ A free, open-source platform for preparing for **Juniper (JNCIA → JNCIE)** and
 
 ---
 
-## Quick Start (Native — No Docker Required)
+## Quick Start (Docker — recommended)
+
+### Prerequisites
+
+- **Docker Engine 24+** with **Docker Compose v2** (`docker compose` plugin; included in Docker Desktop on macOS/Windows, or via `docker-compose-plugin` package on Linux)
+
+### One-command startup
+
+```bash
+git clone <repo-url>
+cd NetCert
+
+docker compose up --build -d
+```
+
+That's it — PostgreSQL, Redis, Go backend, and Next.js frontend build and start together; database migrations are applied automatically.
+
+| Access | URL |
+|--------|-----|
+| UI | http://localhost:3000 |
+| API health | http://localhost:8080/health |
+| PostgreSQL | localhost:5432 |
+| Redis | localhost:6379 |
+
+Stop everything:
+
+```bash
+docker compose down
+```
+
+All values can be overridden via a root `.env` file (see `.env.example`): host ports, DB credentials, JWT secret.
+
+---
+
+## Alternative: Native Setup (No Docker)
 
 ### Prerequisites
 
@@ -15,7 +49,7 @@ A free, open-source platform for preparing for **Juniper (JNCIA → JNCIE)** and
 | **PostgreSQL** | 16+ | `dnf install postgresql-server postgresql-contrib` | `apt install postgresql postgresql-contrib` |
 | **Redis** | 7+ | `dnf install redis` | `apt install redis` |
 
-> **This project runs natively without Docker.** Docker is only needed for Containerlab (JNCIE/CCIE labs) — not for the main app.
+> The setup below does not require Docker, but needs Go, Node.js, PostgreSQL and Redis installed locally.
 
 ---
 
@@ -94,6 +128,10 @@ npm run dev
 ## Useful Commands
 
 ```bash
+# Full stack via Docker Compose
+docker compose up --build -d
+docker compose down
+
 # Backend
 cd backend && go run ./cmd/server/
 
@@ -152,8 +190,9 @@ NetCert/
 │   ├── components/             # UI components
 │   └── lib/                    # API client, context, utilities
 ├── scripts/                    # Question generators, audits
-├── infra/                      # Docker infrastructure (for Containerlab only)
-│   └── docker-compose.yml
+├── docker-compose.yml          # Centralized deployment (postgres, redis, backend, frontend)
+├── .env.example                # Optional env overrides for Docker Compose
+├── infra/                      # Dockerfiles + staging (Containerlab) infrastructure
 └── CLAUDE.md                   # Project source of truth for AI agents
 ```
 

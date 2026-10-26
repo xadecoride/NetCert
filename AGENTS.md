@@ -6,14 +6,13 @@ NetCert is a certification practice platform with a Go backend, Next.js frontend
 
 ## Running the full stack
 
-Start the entire application with one command:
+Start the entire application with one command (works right after cloning the repo):
 
 ```bash
-cp backend/.env.example backend/.env
-make up
+docker compose up --build -d
 ```
 
-This builds and starts PostgreSQL, Redis, backend, and frontend. Migrations are applied automatically before the backend starts.
+This builds and starts PostgreSQL, Redis, backend, and frontend. Migrations are applied automatically before the backend starts. Optional overrides via root `.env` (see `.env.example`).
 
 - Frontend: http://localhost:3000
 - API health: http://localhost:8080/health
@@ -21,8 +20,10 @@ This builds and starts PostgreSQL, Redis, backend, and frontend. Migrations are 
 Stop the stack:
 
 ```bash
-make down
+docker compose down
 ```
+
+(equivalent Makefile shortcuts: `make up` / `make down`)
 
 ## Question generation
 

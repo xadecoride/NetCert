@@ -2,7 +2,7 @@
 
 # Development
 dev-infra:
-	docker compose -f infra/docker-compose.yml up -d postgres redis
+	docker compose up -d postgres redis
 
 dev-backend:
 	cd backend && go run ./cmd/server/
@@ -17,10 +17,10 @@ dev-all: dev-infra
 
 # Full stack via Docker Compose
 up:
-	docker compose -f infra/docker-compose.yml up --build -d
+	docker compose up --build -d
 
 down:
-	docker compose -f infra/docker-compose.yml down
+	docker compose down
 
 # Build
 build-backend:

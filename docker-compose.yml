@@ -1,0 +1,127 @@
+# ============================================================
+# NetCert — централизованное развертывание (development)
+# ============================================================
+# Запуск одной командой после клонирования:
+#
+#   docker compose up --build -d
+#
+# Сервисы: PostgreSQL 16, Redis 7, Go API backend, Next.js frontend.
+# Миграции применяются автоматически сервисом `migrations`
+# (backend дополнительно переприменяет их идемпотентно при старте).
+#
+# Все значения можно переопределить через файл `.env` в корне репозитория
+# (см. `.env.example`). По умолчанию используются dev-значения.
+# ============================================================
+
+name: netcert
+
+services:
+  # ─── База данных ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: netcert-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-netcert}
+      POSTGRES_USER: ${POSTGRES_USER:-netcert}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-netcert}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-netcert}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Кэш / очереди ────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: netcert-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Миграции БД (одноразово) ─────────────────────────────
+  migrations:
+    build:
+      context: ./backend
+      dockerfile: ./infra/Dockerfile.backend
+    container_name: netcert-migrations
+    environment:
+      DATABASE_DSN: postgres://${POSTGRES_USER:-netcert}:${POSTGRES_PASSWORD:-netcert}@postgres:5432/${POSTGRES_DB:-netcert}?sslmode=disable
+    command: >
+      sh -c "
+        echo 'Waiting for postgres...' &&
+        until pg_isready -h postgres -U ${POSTGRES_USER:-netcert} -d ${POSTGRES_DB:-netcert}; do
+          sleep 2;
+        done &&
+        echo 'Applying migrations...' &&
+        goose -dir /app/migrations postgres \"$$DATABASE_DSN\" up
+      "
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ─── Go API backend ───────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./infra/Dockerfile.backend
+    container_name: netcert-backend
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      APP_ENV: development
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "8080"
+      DATABASE_DSN: postgres://${POSTGRES_USER:-netcert}:${POSTGRES_PASSWORD:-netcert}@postgres:5432/${POSTGRES_DB:-netcert}?sslmode=disable
+      REDIS_ADDR: redis:6379
+      # Внимание: это локальный dev-секрет. Для своего окружения
+      # задайте JWT_SECRET в `.env`.
+      JWT_SECRET: ${JWT_SECRET:-netcert-dev-secret-change-in-production}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # ─── Next.js frontend ─────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./infra/Dockerfile.frontend
+      args:
+        # URL API для серверного прокси (rewrites) внутри сети Compose
+        NEXT_PUBLIC_API_URL: http://backend:8080/api/v1
+    container_name: netcert-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8080/api/v1
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+# ─── Тома ──────────────────────────────────────────────────
+volumes:
+  pgdata:
+  redis-data:
