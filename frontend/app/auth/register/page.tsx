@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useTranslation } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NetworkTopology } from "@/components/landing/network-topology";
+import { TopologyAnimation } from "@/components/landing/TopologyAnimation";
 import {
   UserPlus,
   Eye,
@@ -76,7 +76,7 @@ export default function RegisterPage() {
 
         <div className="relative z-10 flex-1 flex items-center justify-center p-12">
           <div className="w-full max-w-md aspect-square">
-            <NetworkTopology className="w-full h-full" />
+            <TopologyAnimation className="w-full h-full" />
           </div>
         </div>
 

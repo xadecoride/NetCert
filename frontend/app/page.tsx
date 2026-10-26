@@ -8,8 +8,7 @@ import { BentoCard } from "@/components/ui/card";
 import { SectionReveal } from "@/components/motion/SectionReveal";
 import { KineticMarquee } from "@/components/motion/KineticMarquee";
 import { AnimatedCounter } from "@/components/motion/AnimatedCounter";
-import { NetworkTopology } from "@/components/landing/network-topology";
-import { HeroTopology } from "@/components/landing/HeroTopology";
+import { TopologyAnimation } from "@/components/landing/TopologyAnimation";
 import { useTranslation } from "@/lib/i18n/context";
 import { springTransition } from "@/lib/motion";
 import {
@@ -256,7 +255,7 @@ export default function LandingPage() {
             >
               <div className="relative w-full max-w-lg aspect-square">
                 <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-emerald-100/50 to-zinc-100/50 dark:from-emerald-900/10 dark:to-zinc-900/30 border border-zinc-200 dark:border-zinc-800 shadow-[var(--shadow-glow-emerald-soft)]" />
-                <HeroTopology className="relative p-6 lg:p-8" />
+                <TopologyAnimation className="relative p-6 lg:p-8" />
                 {/* floating stat chips overlay */}
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
