@@ -36,6 +36,12 @@ docker compose down
 
 All values can be overridden via a root `.env` file (see `.env.example`): host ports, DB credentials, JWT secret.
 
+**Гарантированный подъём на порту 3000** (пересобирает образы и убирает случайные переопределения портов из `.env`):
+
+```bash
+sudo bash scripts/docker-up.sh
+```
+
 ---
 
 ## Alternative: Native Setup (No Docker)
