@@ -39,7 +39,7 @@ INSERT INTO exams (id, track_id, code, name, level, duration_minutes, total_ques
   ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001',
    'JNCIA-Junos-ENT', 'JNCIA-Junos (Enterprise Routing)', 'JNCIA', 90, 60, 60.0, true),
   ('b0000000-0000-0000-0000-000000000012', 'a0000000-0000-0000-0000-000000000001',
-   'JNCIS-ENT', 'JNCIS-ENT (Enterprise Routing & Switching)', 'JNCIS', 90, 65, 65.0, true),
+   'JNCIS-ENT', 'JNCIS-ENT (Enterprise Routing & Switching)', 'JNCIP', 90, 65, 65.0, true),
   ('b0000000-0000-0000-0000-000000000011', 'a0000000-0000-0000-0000-000000000001',
    'JNCIP-ENT', 'JNCIP-ENT (Enterprise Routing & Switching)', 'JNCIP', 120, 75, 70.0, true),
 
@@ -47,7 +47,7 @@ INSERT INTO exams (id, track_id, code, name, level, duration_minutes, total_ques
   ('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000002',
    'JNCIA-Junos-SP', 'JNCIA-Junos (Service Provider)', 'JNCIA', 90, 60, 60.0, true),
   ('b0000000-0000-0000-0000-000000000014', 'a0000000-0000-0000-0000-000000000002',
-   'JNCIS-SP', 'JNCIS-SP (Service Provider)', 'JNCIS', 90, 65, 65.0, true),
+   'JNCIS-SP', 'JNCIS-SP (Service Provider)', 'JNCIP', 90, 65, 65.0, true),
   ('b0000000-0000-0000-0000-000000000013', 'a0000000-0000-0000-0000-000000000002',
    'JNCIP-SP', 'JNCIP-SP (Service Provider)', 'JNCIP', 120, 70, 70.0, true),
 
@@ -55,7 +55,7 @@ INSERT INTO exams (id, track_id, code, name, level, duration_minutes, total_ques
   ('b0000000-0000-0000-0000-000000000022', 'a0000000-0000-0000-0000-000000000003',
    'JNCSA-Junos', 'JNCSA-Junos (Security)', 'JNCIA', 90, 60, 60.0, true),
   ('b0000000-0000-0000-0000-000000000025', 'a0000000-0000-0000-0000-000000000003',
-   'JNCIS-SEC', 'JNCIS-SEC (Security)', 'JNCIS', 90, 65, 65.0, true),
+   'JNCIS-SEC', 'JNCIS-SEC (Security)', 'JNCIP', 90, 65, 65.0, true),
   ('b0000000-0000-0000-0000-000000000024', 'a0000000-0000-0000-0000-000000000003',
    'JNCIP-SEC', 'JNCIP-SEC (Security)', 'JNCIP', 120, 70, 70.0, true),
 
@@ -63,7 +63,7 @@ INSERT INTO exams (id, track_id, code, name, level, duration_minutes, total_ques
   ('b0000000-0000-0000-0000-000000000020', 'a0000000-0000-0000-0000-000000000004',
    'JNCDA-Junos', 'JNCDA-Junos (Data Center)', 'JNCIA', 90, 60, 60.0, true),
   ('b0000000-0000-0000-0000-000000000027', 'a0000000-0000-0000-0000-000000000004',
-   'JNCIS-DC', 'JNCIS-DC (Data Center)', 'JNCIS', 90, 65, 65.0, true),
+   'JNCIS-DC', 'JNCIS-DC (Data Center)', 'JNCIP', 90, 65, 65.0, true),
   ('b0000000-0000-0000-0000-000000000026', 'a0000000-0000-0000-0000-000000000004',
    'JNCIP-DC', 'JNCIP-DC (Data Center)', 'JNCIP', 120, 70, 70.0, true),
 
@@ -71,7 +71,7 @@ INSERT INTO exams (id, track_id, code, name, level, duration_minutes, total_ques
   ('b0000000-0000-0000-0000-000000000021', 'a0000000-0000-0000-0000-000000000005',
    'JNCDA-AUT', 'JNCDA-Junos (DevOps & Automation)', 'JNCIA', 90, 60, 60.0, true),
   ('b0000000-0000-0000-0000-000000000029', 'a0000000-0000-0000-0000-000000000005',
-   'JNCIS-AUT', 'JNCIS-AUT (DevOps & Automation)', 'JNCIS', 90, 65, 65.0, true),
+   'JNCIS-AUT', 'JNCIS-AUT (DevOps & Automation)', 'JNCIP', 90, 65, 65.0, true),
   ('b0000000-0000-0000-0000-000000000028', 'a0000000-0000-0000-0000-000000000005',
    'JNCIP-AUT', 'JNCIP-AUT (DevOps & Automation)', 'JNCIP', 120, 70, 70.0, true),
 
